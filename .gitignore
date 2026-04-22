@@ -1,1 +1,5 @@
-output/\n__pycache__/\n*.pyc\n.env
+__pycache__/
+*.pyc
+output/
+.env
+*.log
