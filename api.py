@@ -71,9 +71,7 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str) -> As
         yield sse("grade", data=grade)
 
         if not grade["worth_targeting"]:
-            yield sse("log", text=f"Score {grade['total']} outside target range — skipping build", level="error")
-            yield sse("done", status="skipped")
-            return
+            yield sse("log", text=f"Score {grade['total']}/10 — noted, building anyway", level="info")
 
         # ── Step 3: Generate site ────────────────────────────────────
         from slugify import slugify
@@ -166,7 +164,7 @@ async def build(req: BuildRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "1.0.2"}
+    return {"status": "ok", "version": "1.0.3"}
 
 
 @app.get("/")
