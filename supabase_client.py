@@ -9,7 +9,7 @@ import urllib.request
 import urllib.error
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY", "sb_publishable_IJxpmO67xZUpIM6OdlVxKg__Yvdfl8a")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "sb_publishable_IJxpmO67xZUpIM6OdlVxKg__Yvdfl8a")
 DEFAULT_BRAND_ID = os.environ.get("LVRG_BRAND_ID", "0be94239-82c7-440e-80ef-171033694fb5")  # LVRG default brand
 
 

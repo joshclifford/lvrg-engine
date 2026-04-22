@@ -89,6 +89,7 @@ OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code blocks. 
             html = html.rsplit("```", 1)[0]
     
     # Save site
+    os.makedirs(SITES_DIR, exist_ok=True)
     site_dir = os.path.join(SITES_DIR, prospect_id)
     os.makedirs(site_dir, exist_ok=True)
     
@@ -182,6 +183,7 @@ OUTPUT FORMAT (JSON only, no markdown):
     email_data["prospect_id"] = prospect_id
     
     # Save
+    os.makedirs(EMAILS_DIR, exist_ok=True)
     email_path = os.path.join(EMAILS_DIR, f"{prospect_id}.json")
     with open(email_path, "w") as f:
         json.dump(email_data, f, indent=2)

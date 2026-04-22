@@ -134,6 +134,7 @@ def scrape_site(domain: str) -> dict:
     print(f"  [intel] ✓ {intel['business_name']} — {intel['business_type']} — {intel['location']}")
     
     # Save
+    os.makedirs(INTEL_DIR, exist_ok=True)
     slug = domain.replace(".", "_")
     with open(os.path.join(INTEL_DIR, f"{slug}.json"), "w") as f:
         json.dump(intel, f, indent=2)
