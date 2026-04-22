@@ -1,0 +1,261 @@
+[
+  {
+    "domain": "barkamon.com",
+    "prospect_id": "barkamon",
+    "timestamp": "2026-04-18T00:08:03.591501",
+    "status": "complete",
+    "intel": {
+      "domain": "barkamon.com",
+      "url": "https://barkamon.com",
+      "business_name": "Bar Kamon",
+      "tagline": "1920's Taisho Roman inspired Japanese craft cocktail bar",
+      "description": "Bar Kamon is a speakeasy-style cocktail lounge located in the East Village of downtown San Diego, hidden behind a secret door at Asa Cafe and Bakery. The bar features a 1920s-inspired atmosphere with wood-paneled walls, vintage furnishings, and crystal chandeliers, serving innovative Japanese craft cocktails and Japanese cuisine. The venue is exclusively for ages 21+ and operates as a sophisticated lounge experience.",
+      "services": [
+        "Craft cocktails",
+        "Japanese cuisine",
+        "Private event hosting",
+        "Lounge buyouts",
+        "Special occasion celebrations",
+        "Japanese whisky selection"
+      ],
+      "location": "East Village, Downtown San Diego",
+      "phone": "",
+      "email": "",
+      "hours": "5:30PM - 10PM (Closed Tue), Fri & Sat 5:30PM - 11PM",
+      "social_proof": "Team of experienced bartenders with 4-15 years of bartending experience each",
+      "key_cta": "Make a reservation or book a private event",
+      "missing": "No phone number, no email address, no online reservation system, no full menu displayed, no pricing information, no customer reviews or testimonials, no address details",
+      "brand_vibe": "Sophisticated 1920s speakeasy with Japanese influences and vintage elegance",
+      "primary_color": "#2d2d2d",
+      "secondary_color": "#d4af37",
+      "business_type": "bar",
+      "pain_point": "No visible contact information or working reservation system makes it difficult for customers to actually book a table or event.",
+      "chat_persona": "Knowledgeable mixologist who embodies 1920s sophistication while showcasing Bar Kamon's unique Japanese-inspired craft cocktail experience and exclusive speakeasy ambiance.",
+      "cta_angle": "Reserve Your Table or Book a Private Event",
+      "raw_text": "Craft Bar Kamon - Speakeasy Bar Experience Home MENU INDUSTRY NIGHTS FAQ RESERVATION News &amp; Events TEAM Home MENU INDUSTRY NIGHTS FAQ RESERVATION News &amp; Events TEAM More Home MENU INDUSTRY NIGHTS FAQ RESERVATION News &amp; Events TEAM Home MENU INDUSTRY NIGHTS FAQ RESERVATION News &amp; Events TEAM Welcome to Bar Kamon Welcome to Bar Kamon Welcome to Bar Kamon Welcome to Bar Kamon 1920\u2019s Taisho Roman inspired Japanese craft cocktail bar. +21 ONLY&nbsp; 5:30PM - 10PM (Closed Tue) Fri &amp; Sat 5:30PM - 11PM Reservations About Us Indulge in Creative Cocktails and Japanese Culinary Excellence Bar Kamon is a 1920s-inspired Taisho Roman cocktail lounge located in the East Village of downtown San Diego. Hidden behind a secret door at Asa Cafe and Bakery, we offer a sophisticated atmosphere with wood-paneled walls, vintage furnishings, and crystal chandeliers. Our cocktail menu features innovative drinks like the Clarified Tokyo Banana and Hojicha-Infused Negronis, crafted with Japane"
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 3,
+        "social_proof": 8,
+        "hours": 6,
+        "chat": 8,
+        "gaps": 4
+      },
+      "total": 6,
+      "verdict": "Mid \u2014 clear conversion gaps",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/barkamon",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/barkamon/index.html",
+    "email": {
+      "subject_a": "We built something for Bar Kamon",
+      "subject_b": "The secret door is easy to find \u2014 but booking a visit isn't",
+      "subject_c": "More reservations for Bar Kamon without lifting a finger",
+      "body": "The hidden entrance behind Asa Cafe, the 1920s speakeasy vibe, bartenders with up to 15 years of experience \u2014 Bar Kamon has clearly nailed the atmosphere.\n\nBut right now, someone who discovers you online has no way to book a table, see your cocktail menu, or even find your address without digging.\n\nWe built you a free preview \u2014 a redesigned homepage and a live AI chat agent that can answer questions about your Japanese cocktails, explain how to find the hidden entrance, and capture reservation requests 24/7.\n\nSee it here: https://joshclifford.github.io/lvrg-previews/barkamon/index.html\n\nIf you want it, claim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/barkamon/index.html",
+      "prospect_id": "barkamon"
+    },
+    "instantly_pushed": false
+  },
+  {
+    "domain": "toastcatering.com",
+    "prospect_id": "toastcatering",
+    "timestamp": "2026-04-18T00:09:33.440851",
+    "status": "complete",
+    "intel": {
+      "domain": "toastcatering.com",
+      "url": "https://toastcatering.com",
+      "business_name": "Toast Catering",
+      "tagline": "Fresh gourmet catering, cooked on site!",
+      "description": "Toast Catering is a San Diego-based full-service catering company that specializes in cooking food on-site for events. They serve weddings, corporate events, and private parties with high-quality gourmet meals prepared fresh. With over 15 years of experience, they focus on delivering bold, flavorful dishes at reasonable prices with professional service.",
+      "services": [
+        "Wedding catering",
+        "Corporate event catering",
+        "Private party catering",
+        "Cocktail receptions",
+        "Bar/Bat Mitzvah catering",
+        "Breakfast and lunch delivery",
+        "Graduation party catering",
+        "Holiday party catering",
+        "Themed food stations",
+        "Ethnic food stations"
+      ],
+      "location": "San Diego, CA",
+      "phone": "619.795.9135",
+      "email": "info@toastcatering.com",
+      "hours": "",
+      "social_proof": "Over 15 years of experience. Multiple customer testimonials praising food quality and service. Guests specifically mentioned quality of food and happy with wedding service.",
+      "key_cta": "Call, email or contact us today for more information about catering your event",
+      "missing": "No online booking system, no detailed pricing information, no full menu displayed on homepage, no business hours listed, no physical address provided, no live chat option",
+      "brand_vibe": "Professional, warm, quality-focused, passionate about food",
+      "primary_color": "#D4A574",
+      "secondary_color": "#2C2C2C",
+      "business_type": "catering",
+      "pain_point": "No clear online menu or pricing makes it difficult for potential customers to evaluate options without calling, creating friction in the decision-making process.",
+      "chat_persona": "Warm and professional catering consultant who understands event planning stress and asks thoughtful questions about guest count, event type, and food preferences to recommend the perfect menu.",
+      "cta_angle": "Get a Custom Catering Quote for Your Event",
+      "raw_text": "Toast Catering - San Diego Caterer Navigation About Us Weddings Corporate Photos Menus Order Delivery About Us Weddings Corporate Photos Menus Order Delivery Fresh gourmet catering, cooked on site! At Toast Catering, we want your guests to be raving about the food, even those who are notoriously hard to please. That's why we always cook on site, so your dishes are served fresh and perfectly prepared. Not many San Diego catering services companies do that! From small intimate private parties to luxurious weddings &nbsp;and big corporate events , let's talk about your catering needs for your next event in San Diego. \"Picking them for our catering company was one of the best decisions we made, because not only was their food delicious, they were also so wonderful to work with!\" Why should you hire TOAST for your next catering event in San Diego? We understand the value of high quality food at a reasonable price. We also believe that best catering experiences are created when food is cooke"
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 7,
+        "social_proof": 8,
+        "hours": 2,
+        "chat": 0,
+        "gaps": 4
+      },
+      "total": 5,
+      "verdict": "Mid \u2014 clear conversion gaps",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/toastcatering",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/toastcatering/index.html",
+    "email": {
+      "subject_a": "We built something for Toast Catering",
+      "subject_b": "The one thing missing from your on-site cooking pitch",
+      "subject_c": "Turn Toast Catering site visitors into booked events",
+      "body": "Hi,\n\nAfter 15 years of cooking on-site at San Diego weddings and events, your reputation clearly speaks for itself \u2014 those testimonials about food quality are hard to earn in catering.\n\nBut right now, someone planning their wedding can't request a quote or see pricing without hunting for a way to contact you, which means you're losing leads to competitors with easier booking.\n\nWe built Toast Catering a free preview \u2014 a redesigned homepage and a live AI chat agent that can answer menu questions, check availability, and capture event details 24/7: https://joshclifford.github.io/lvrg-previews/toastcatering/index.html\n\nClaim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/toastcatering/index.html",
+      "prospect_id": "toastcatering"
+    },
+    "instantly_pushed": false
+  },
+  {
+    "domain": "hiddencraftsd.com",
+    "prospect_id": "hiddencraftsd",
+    "timestamp": "2026-04-18T00:10:54.832936",
+    "status": "complete",
+    "intel": {
+      "domain": "hiddencraftsd.com",
+      "url": "https://hiddencraftsd.com",
+      "business_name": "Hidden Craft",
+      "tagline": "Craft Beer \u2022 Local Food \u2022 San Diego Vibes",
+      "description": "Hidden Craft is a San Diego restaurant and craft beer bar featuring over 30 self-serve taps showcasing local breweries. They serve house-made food including tacos, bowls, and burgers designed to complement their rotating beer selections. The venue offers dine-in, takeout, catering, and private event hosting services.",
+      "services": [
+        "Craft Beer Selection (30+ taps)",
+        "Food Service (Dine-in & Takeout)",
+        "Online Ordering",
+        "Table Reservations",
+        "Private Event Hosting",
+        "Catering",
+        "Live Music",
+        "Happy Hour",
+        "Community Events"
+      ],
+      "location": "Corner India and C Street, San Diego, CA",
+      "phone": "",
+      "email": "",
+      "hours": "",
+      "social_proof": "Google reviews present with 5-star ratings. Praised for delicious food, clean atmosphere, pleasant service.",
+      "key_cta": "Order Online / Book a Table / Book a Party",
+      "missing": "Phone number not provided, email not listed, business hours not specified, complete menu not visible, pricing not shown",
+      "brand_vibe": "Casual yet refined, vibrant San Diego craft culture, community-focused",
+      "primary_color": "#1a3a3a",
+      "secondary_color": "#d4a574",
+      "business_type": "restaurant",
+      "pain_point": "No phone number or direct contact information readily visible, forcing customers to use forms or social media for inquiries.",
+      "chat_persona": "Knowledgeable and friendly neighborhood guide who shares passion for local craft beer and house-made food while helping customers reserve tables, order food, or plan events.",
+      "cta_angle": "Book Your Private Event or Reserve a Table to Experience Hidden Craft",
+      "raw_text": "Hidden Craft - Corner India and C Street, San Diego, CA \u00d7 Order your favorite dishes in seconds! Order Online \u00d7 Turn moments into memories! Choose us for your next special occasion or get-together. Got a birthday party, rehearsal dinner, corporate or other event coming up? We&apos;re a great option for your gathering! Inquire today and let us know how we can make your special occasion perfect! Book your party \u00d7 We are taking online reservations! Let\u2019s ensure you get a great table: Book today! We recommend making a reservation ahead of time. Book your table today! Book Table \u00d7 Did you know we do catering? Whatever your occasion, however big or small, we have the perfect options to choose from. Cater your birthday party, holiday party, corporate events, wedding festivities and more! Catering Packages \u00d7 PADRES OPENING DAY = NEW BEER LINEUP \u26be\ud83c\udf7b Come check out what\u2019s pouring at Hidden Craft We\u2019re pouring a fresh beer lineup for Opening Day \u26be\ud83c\udf7b Come kick off the season with us at Hidden Craft."
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 3,
+        "social_proof": 8,
+        "hours": 2,
+        "chat": 8,
+        "gaps": 4
+      },
+      "total": 6,
+      "verdict": "Mid \u2014 clear conversion gaps",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/hiddencraftsd",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/hiddencraftsd/index.html",
+    "email": {
+      "subject_a": "We built something for Hidden Craft",
+      "subject_b": "30 taps, zero phone number on your site",
+      "subject_c": "Turn your website into your next reservation",
+      "body": "The self-serve tap wall at Hidden Craft is one of the more interesting concepts I've seen in San Diego \u2014 30 rotating locals on draft with food built to match.\n\nBut your site is missing basics that cost you covers: no phone number, no hours listed, and no way for someone to ask a quick question before heading down to India and C.\n\nWe built you a free preview \u2014 a redesigned homepage and a live AI chat agent that can answer questions about your tap list, handle catering inquiries, and book private events 24/7.\n\nSee it here: https://joshclifford.github.io/lvrg-previews/hiddencraftsd/index.html\n\nClaim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/hiddencraftsd/index.html",
+      "prospect_id": "hiddencraftsd"
+    },
+    "instantly_pushed": false
+  },
+  {
+    "domain": "misadventure.co",
+    "prospect_id": "misadventure",
+    "timestamp": "2026-04-18T00:12:23.417725",
+    "status": "complete",
+    "intel": {
+      "domain": "misadventure.co",
+      "url": "https://misadventure.co",
+      "business_name": "Misadventure & Co.",
+      "tagline": "The World's Most Sustainable Vodka Company",
+      "description": "Misadventure & Co. produces carbon-negative vodka made from surplus baked goods, combining sustainability with craft spirits. They operate a tasting room in Vista, CA featuring cocktails, food, live music, and events. The brand celebrates memorable moments and proves that saving the world can be fun.",
+      "services": [
+        "Craft vodka production and retail",
+        "Cocktail bar",
+        "Tasting room",
+        "Food and brunch service",
+        "Live music events",
+        "Private events",
+        "Trivia nights",
+        "Murder mystery nights",
+        "Makers market",
+        "Online vodka orders"
+      ],
+      "location": "2420 Grand Ave. Suite C. Vista, CA 92081",
+      "phone": "(760) 536-3271",
+      "email": "",
+      "hours": "",
+      "social_proof": "Won 18 awards; first carbon negative consumer good; first and only spirit made from excess baked goods",
+      "key_cta": "Order Online or Visit Our Tasting Room",
+      "missing": "No email address provided for contact, no business hours listed, no customer testimonials or reviews, no social media links, no online booking system for events/reservations, limited product information",
+      "brand_vibe": "Fun, sustainable, retro adventure with eco-conscious values",
+      "primary_color": "#2d5016",
+      "secondary_color": "#d4af37",
+      "business_type": "craft_beverage",
+      "pain_point": "The site lacks clear business hours and event booking details, making it difficult for customers to plan visits or reserve private events.",
+      "chat_persona": "A friendly, enthusiastic brand ambassador who celebrates sustainability and memorable moments while helping customers discover Misadventure's unique vodka and tasting room experience.",
+      "cta_angle": "Reserve a table or book a private event at the tasting room",
+      "raw_text": "Shop Misadventure Vodka | World&#x27;s Most Sustainable Vodka Skip to main content Toggle menu Search About Us Food Menu Brunch Menu Order Online Cocktail Bar Prohibition Hour Cocktail Menu Happy Hour Menu Events &amp; Reservations Live Music Private Events Trivia Night Makers Market Murder Mystery Magic Night Sign in or Register Cart Search About Us Food Menu Brunch Menu Order Online Cocktail Bar Prohibition Hour Cocktail Menu Happy Hour Menu Events &amp; Reservations Live Music Private Events Trivia Night Makers Market Murder Mystery Magic Night Sign in or Register Cart The World's Most Sustainable Vodka Company Have you ever realized that most of our greatest memories come from the times when nothing seems to go as planned? We call that a misadventure, and it\u2019s what has led us here. Times are crazy, but they don\u2019t have to be. Step back into a simpler time and find out what your next adventure has in store. VISIT OUR TASTING ROOM BUY VODKA Reserve at Misadventure & Co. on Yelp MISADV"
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 7,
+        "social_proof": 8,
+        "hours": 2,
+        "chat": 8,
+        "gaps": 4
+      },
+      "total": 6,
+      "verdict": "Mid \u2014 clear conversion gaps",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/misadventure",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/misadventure/index.html",
+    "email": {
+      "subject_a": "We built something for Misadventure & Co.",
+      "subject_b": "Visitors can't book your tasting room online",
+      "subject_c": "Turn surplus bread curiosity into tasting room visits",
+      "body": "Hey there,\n\nTurning surplus baked goods into carbon-negative vodka is genuinely one of the more interesting things I've come across \u2014 18 awards and the first carbon negative consumer good says you've nailed the product side. But when I visited your site, I couldn't find hours, book a tasting room visit, or even see a way to email you \u2014 that's a lot of friction for someone ready to show up in Vista.\n\nWe built you a free preview \u2014 a redesigned homepage and a live AI chat agent that can answer questions about your spirits, share tasting room hours, and help visitors plan their visit 24/7.\n\nSee it here: https://joshclifford.github.io/lvrg-previews/misadventure/index.html\n\nClaim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/misadventure/index.html",
+      "prospect_id": "misadventure"
+    },
+    "instantly_pushed": false
+  }
+]

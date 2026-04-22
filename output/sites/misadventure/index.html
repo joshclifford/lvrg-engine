@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misadventure & Co. | Carbon-Negative Craft Vodka | Vista, CA</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B4513;
+            --primary-dark: #6B3410;
+            --primary-light: #A65D2E;
+            --gold: #D4AF37;
+            --cream: #FDF8F3;
+            --charcoal: #1a1a1a;
+            --white: #ffffff;
+            --gray: #6b6b6b;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--charcoal);
+            line-height: 1.6;
+            background-color: var(--cream);
+        }
+
+        /* LVRG Claim Bar */
+        .claim-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--charcoal);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            font-size: 13px;
+        }
+
+        .claim-bar span {
+            color: #888;
+        }
+
+        .claim-bar span strong {
+            color: var(--white);
+        }
+
+        .claim-btn {
+            background: linear-gradient(135deg, var(--gold), #C9A227);
+            color: var(--charcoal);
+            padding: 8px 18px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .claim-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 42px;
+            left: 0;
+            right: 0;
+            background: rgba(253, 248, 243, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 999;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: var(--gold);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: var(--white);
+            padding: 12px 28px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 100px;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            padding: 60px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), #E8C547);
+            color: var(--charcoal);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 62px;
+            line-height: 1.1;
+            color: var(--charcoal);
+            margin-bottom: 25px;
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            padding: 16px 36px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(139, 69, 19, 0.35);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--charcoal);
+            padding: 16px 36px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 15px;
+            border: 2px solid var(--charcoal);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--charcoal);
+            color: var(--white);
+        }
+
+        .hero-visual {
+            position: absolute;
+            right: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 700px;
+            height: 700px;
+            z-index: 1;
+        }
+
+        .visual-circle {
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .circle-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--gold) 100%);
+            top: 100px;
+            right: 50px;
+            opacity: 0.9;
+        }
+
+        .circle-2 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(225deg, var(--gold), #E8C547);
+            top: 50px;
+            right: 250px;
+            opacity: 0.7;
+        }
+
+        .circle-3 {
+            width: 150px;
+            height: 150px;
+            background: var(--cream);
+            border: 3px solid var(--primary);
+            top: 300px;
+            right: 400px;
+        }
+
+        .geometric-accent {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 4px solid var(--gold);
+            transform: rotate(45deg);
+            top: 200px;
+            right: 150px;
+            opacity: 0.5;
+        }
+
+        .bottle-shape {
+            position: absolute;
+            width: 120px;
+            height: 350px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(139,69,19,0.3) 100%);
+            border-radius: 20px 20px 60px 60px;
+            top: 150px;
+            right: 200px;
+            border: 3px solid rgba(255,255,255,0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        .bottle-neck {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(139,69,19,0.4));
+            border-radius: 10px 10px 5px 5px;
+            top: 70px;
+            right: 240px;
+            border: 3px solid rgba(255,255,255,0.4);
+        }
+
+        /* Social Proof Bar */
+        .social-proof {
+            background: var(--charcoal);
+            padding: 50px;
+            display: flex;
+            justify-content: center;
+            gap: 100px;
+        }
+
+        .proof-item {
+            text-align: center;
+        }
+
+        .proof-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .proof-label {
+            color: var(--white);
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        /* Services Section */
+        .services {
+            padding: 100px 50px;
+            background: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .section-tag {
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            color: var(--charcoal);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: var(--cream);
+            padding: 50px 40px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.4s ease;
+            border: 2px solid transparent;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px rgba(139, 69, 19, 0.15);
+        }
+
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .service-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: var(--charcoal);
+        }
+
+        .service-card p {
+            color: var(--gray);
+            line-height: 1.8;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 100px 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .testimonials .section-tag {
+            color: var(--gold);
+        }
+
+        .testimonials .section-title {
+            color: var(--white);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonial-card {
+            background: var(--white);
+            padding: 45px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .quote-icon {
+            font-family: 'Playfair Display', serif;
+            font-size: 80px;
+            color: var(--primary);
+            opacity: 0.15;
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            line-height: 1;
+        }
+
+        .testimonial-text {
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--charcoal);
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--gold));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .author-info h4 {
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+
+        .author-info span {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .stars {
+            color: var(--gold);
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        /* CTA Banner */
+        .cta-banner {
+            padding: 100px 50px;
+            background: var(--cream);
+            text-align: center;
+        }
+
+        .cta-banner h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 52px;
+            color: var(--charcoal);
+            margin-bottom: 20px;
+        }
+
+        .cta-banner p {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-arrow {
+            font-size: 48px;
+            color: var(--primary);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(15px); }
+        }
+
+        /* Footer */
+        footer {
+            background: var(--charcoal);
+            padding: 80px 50px 40px;
+            color: var(--white);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-brand h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-brand p {
+            color: #888;
+            line-height: 1.8;
+        }
+
+        .footer-column h4 {
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+            color: var(--gold);
+        }
+
+        .footer-column p, .footer-column a {
+            color: #888;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-column a:hover {
+            color: var(--white);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            margin-top: 60px;
+            padding-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1001;
+        }
+
+        .chat-toggle {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(139, 69, 19, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(139, 69, 19, 0.5);
+        }
+
+        .chat-toggle svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--white);
+        }
+
+        .chat-panel {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 340px;
+            height: 480px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-panel.active {
+            display: flex;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--charcoal);
+            font-size: 18px;
+        }
+
+        .chat-header-info h4 {
+            color: var(--white);
+            font-size: 15px;
+        }
+
+        .chat-header-info span {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 15px;
+        }
+
+        .message.bot {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .message-bubble {
+            background: var(--white);
+            padding: 15px;
+            border-radius: 15px;
+            border-top-left-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            max-width: 240px;
+        }
+
+        .message-bubble p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--charcoal);
+        }
+
+        .chat-input {
+            padding: 15px;
+            background: var(--white);
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #eee;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-input button {
+            width: 45px;
+            height: 45px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            background: var(--primary-dark);
+        }
+
+        .chat-input button svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--white);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .services-grid, .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero h1 {
+                font-size: 48px;
+            }
+
+            .hero-visual {
+                display: none;
+            }
+
+            .social-proof {
+                flex-wrap: wrap;
+                gap: 50px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 40px 20px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero-ctas {
+                flex-direction: column;
+            }
+
+            .section-title {
+                font-size: 36px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-panel {
+                width: 300px;
+                height: 420px;
+                right: -10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LVRG Claim Bar -->
+    <div class="claim-bar">
+        <span>This site was built for <strong>Misadventure & Co.</strong> by LVRG Agency.</span>
+        <a href="https://theresandiego.com/advertise/" class="claim-btn">Claim This Site →</a>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="logo">MISADVENTURE<span>&</span>CO.</a>
+        <ul class="nav-links">
+            <li><a href="#spirits">Our Spirits</a></li>
+            <li><a href="#tasting">Tasting Room</a></li>
+            <li><a href="#events">Events</a></li>
+            <li><a href="#story">Our Story</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <a href="#visit" class="nav-cta">Visit Us</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">🌿 Carbon Negative Craft Spirits</span>
+            <h1>Drink Better. <span>Waste Less.</span> Live Bold.</h1>
+            <p>Experience the world's first carbon-negative vodka, handcrafted from rescued baked goods right here in Vista, CA. Every sip supports sustainability without sacrificing award-winning taste.</p>
+            <div class="hero-ctas">
+                <a href="#tasting" class="btn-primary">
+                    Book a Tasting
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+                </a>
+                <a href="#spirits" class="btn-secondary">Explore Our Vodka</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="visual-circle circle-1"></div>
+            <div class="visual-circle circle-2"></div>
+            <div class="visual-circle circle-3"></div>
+            <div class="geometric-accent"></div>
+            <div class="bottle-neck"></div>
+            <div class="bottle-shape"></div>
+        </div>
+    </section>
+
+    <!-- Social Proof Bar -->
+    <section class="social-proof">
+        <div class="proof-item">
+            <div class="proof-number">18</div>
+            <div class="proof-label">Awards Won</div>
+        </div>
+        <div class="proof-item">
+            <div class="proof-number">#1</div>
+            <div class="proof-label">Carbon Negative Spirit</div>
+        </div>
+        <div class="proof-item">
+            <div class="proof-number">Only</div>
+            <div class="proof-label">Vodka From Baked Goods</div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services" id="spirits">
+        <div class="section-header">
+            <p class="section-tag">What We Offer</p>
+            <h2 class="section-title">Craft Spirits & Unforgettable Moments</h2>
+        </div>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">🥃</div>
+                <h3>Award-Winning Vodka</h3>
+                <p>Our signature spirit transforms surplus bakery goods into impossibly smooth, carbon-negative vodka that's earned 18 prestigious awards and counting.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🍸</div>
+                <h3>Craft Cocktail Bar</h3>
+                <p>Step into our Vista tasting room for handcrafted cocktails, daily happy hour "Prohibition Hour" specials, and a rotating menu of seasonal creations.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🎵</div>
+                <h3>Events & Entertainment</h3>
+                <p>From live music and trivia nights to murder mysteries and magic shows—every visit brings new adventures and unforgettable memories.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials" id="reviews">
+        <div class="section-header">
+            <p class="section-tag">What People Are Saying</p>
+            <h2 class="section-title">Stories From Our Guests</h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <span class="quote-icon">"</span>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">The smoothest vodka I've ever tasted, and knowing it's actually helping the planet makes every sip even better. The tasting room atmosphere in Vista is absolutely magical!</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">JM</div>
+                    <div class="author-info">
+                        <h4>Jessica M.</h4>
+                        <span>San Diego Local</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <span class="quote-icon">"</span>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">We hosted our company party here and it was incredible. The cocktails were phenomenal, the staff was amazing, and everyone left asking where they could buy bottles. Simply world-class.</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">RK</div>
+                    <div class="author-info">
+                        <h4>Robert K.</h4>
+                        <span>Private Event Host</span>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <span class="quote-icon">"</span>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">Trivia night has become our weekly tradition. Great drinks, great food, great vibes. Misadventure is proof that doing good and having fun aren't mutually exclusive!</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">ST</div>
+                    <div class

@@ -164,7 +164,7 @@ async def build(req: BuildRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "1.0.1"}
 
 
 @app.get("/")

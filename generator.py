@@ -6,11 +6,13 @@ Uses Claude to generate personalized HTML site and outreach email.
 import anthropic
 import os
 import json
-from config import (ANTHROPIC_API_KEY, SENDER_NAME, SENDER_EMAIL,
+from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
 
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def _get_client():
+    key = os.environ.get("ANTHROPIC_API_KEY") or ""
+    return anthropic.Anthropic(api_key=key)
 
 
 def generate_site(intel: dict, prospect_id: str) -> str:
@@ -71,6 +73,7 @@ COPY:
 
 OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code blocks. Just raw HTML starting with <!DOCTYPE html>"""
 
+    client = _get_client()
     response = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=8000,
@@ -148,6 +151,7 @@ OUTPUT FORMAT (JSON only, no markdown):
   "recommended_subject": "b"
 }}"""
 
+    client = _get_client()
     response = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=1500,

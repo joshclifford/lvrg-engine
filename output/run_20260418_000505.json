@@ -1,0 +1,69 @@
+[
+  {
+    "domain": "insideoutsd.com",
+    "prospect_id": "insideoutsd",
+    "timestamp": "2026-04-18T00:03:43.153886",
+    "status": "complete",
+    "intel": {
+      "domain": "insideoutsd.com",
+      "url": "https://insideoutsd.com",
+      "business_name": "insideOUT",
+      "tagline": "San Diego's premier LGBTQ-owned restaurant and only urban oasis",
+      "description": "insideOUT is an elevated restaurant and lounge located in Hillcrest, San Diego, featuring California-Mediterranean inspired cuisine curated by Executive Chef Johnny Duran. The venue offers a unique indoor-outdoor dining experience with custom handcrafted tables, an open-air atrium, and striking architectural features. The restaurant is known for exceptional customer service, over-the-top themed experiences, and being a safe, inclusive space for all guests.",
+      "services": [
+        "Brunch",
+        "Dinner",
+        "Cocktails",
+        "Wine service",
+        "Beer service",
+        "Happy Hour",
+        "Private Events",
+        "Corporate Events",
+        "Dinner Parties",
+        "Seasonal Experiences",
+        "Full Venue Buyout"
+      ],
+      "location": "1642 University Avenue, Hillcrest, San Diego, CA 92103",
+      "phone": "(619)-888-8623",
+      "email": "info@insideoutsd.com",
+      "hours": "",
+      "social_proof": "Multiple positive Yelp reviews praising outstanding service, delicious food, beautiful atmosphere, and exceptional customer service. Customers highlight unique dining experiences and memorable occasions.",
+      "key_cta": "Make a reservation or book a private event",
+      "missing": "Business hours not listed, no online menu preview, no parking information, limited details about pricing, no chef bio or restaurant history/years established",
+      "brand_vibe": "Modern urban upscale LGBTQ-friendly welcoming elegant",
+      "primary_color": "#000000",
+      "secondary_color": "#FFFFFF",
+      "business_type": "restaurant",
+      "pain_point": "No visible hours of operation makes it difficult for potential customers to plan visits or determine if the restaurant is currently open.",
+      "chat_persona": "Be warm, inclusive, and enthusiastic about curated experiences while professionally assisting with reservations, private events, and menu inquiries with emphasis on the unique atmosphere.",
+      "cta_angle": "Reserve a Table or Book a Private Event",
+      "raw_text": "insideOUT - Hillcrest, San Diego, CA Skip to Main Content (619)-888-8623 info@insideoutsd.com 1642 University Avenue , San Diego MENU BRUNCH DINNER DRINKS HAPPY HOUR COCKTAILS WINE LIST LIQUOR BEER RESERVE JOURNEY PRIVATE EVENTS HAPPENINGS MEDIA GIFT CARDS Facebook page Instagram page Yelp page Toggle navigation Facebook page Instagram page Yelp page MENU BRUNCH DINNER DRINKS HAPPY HOUR COCKTAILS WINE LIST LIQUOR BEER RESERVE JOURNEY PRIVATE EVENTS HAPPENINGS MEDIA GIFT CARDS the video sound on or off 18+ entries map marker pin 1642 University Avenue, San Diego, CA 92103 Our menu The menu, updated seasonally to reflect a creative approach to California and Mediterranean-inspired fare, uses the freshest ingredients provided by our local purveyors. View menu Reservations Call us at (619)-888-8623 or book a table through OpenTable: About us insideOUT is San Diego\u2019s premier LGBTQ-owned restaurant and only urban oasis! Situated within the eye-catching Eitol Towers, adjoined by Harvey Hillcr"
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 10,
+        "social_proof": 8,
+        "hours": 2,
+        "chat": 8,
+        "gaps": 8
+      },
+      "total": 7,
+      "verdict": "Good \u2014 may not need us",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/insideoutsd",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/insideoutsd/index.html",
+    "email": {
+      "subject_a": "We built something for insideOUT",
+      "subject_b": "Guests can't find your hours or menu before visiting",
+      "subject_c": "Turn curious browsers into seated guests at insideOUT",
+      "body": "Chef Johnny Duran's California-Mediterranean menu and that open-air atrium deserve to be seen before someone even walks through the door.\n\nRight now, visitors to your site can't preview the menu, check hours, or know where to park \u2014 so you're losing reservations to friction.\n\nWe built you a free preview \u2014 a redesigned homepage and a live AI chat agent that answers questions about hours, parking, and helps guests book tables 24/7.\n\nSee it here: https://joshclifford.github.io/lvrg-previews/insideoutsd/index.html\n\nClaim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/insideoutsd/index.html",
+      "prospect_id": "insideoutsd"
+    },
+    "instantly_pushed": false
+  }
+]

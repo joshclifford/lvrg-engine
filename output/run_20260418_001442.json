@@ -1,0 +1,69 @@
+[
+  {
+    "domain": "misadventure.co",
+    "prospect_id": "misadventure",
+    "timestamp": "2026-04-18T00:13:14.183599",
+    "status": "complete",
+    "intel": {
+      "domain": "misadventure.co",
+      "url": "https://misadventure.co",
+      "business_name": "Misadventure & Co.",
+      "tagline": "The World's Most Sustainable Vodka Company",
+      "description": "Misadventure & Co. is a craft vodka distillery and tasting room that produces the world's first carbon-negative vodka made from surplus baked goods. They operate a cocktail bar in Vista, CA featuring live music, food, and craft cocktails made exclusively with their award-winning Misadventure Vodka. The brand combines sustainability with memorable experiences and fun.",
+      "services": [
+        "Vodka production and sales",
+        "Craft cocktail bar",
+        "Tasting room experience",
+        "Event hosting and private events",
+        "Live music performances",
+        "Food service",
+        "Prohibition Hour happy hour",
+        "Trivia night",
+        "Makers market",
+        "Murder mystery events",
+        "Magic night events"
+      ],
+      "location": "2420 Grand Ave. Suite C, Vista, CA 92081",
+      "phone": "(760) 536-3271",
+      "email": "",
+      "hours": "",
+      "social_proof": "18 awards won; World's first carbon negative consumer good; First and only spirit made from excess baked goods",
+      "key_cta": "ORDER ONLINE or VISIT OUR TASTING ROOM",
+      "missing": "No business hours listed, no email contact provided, no customer testimonials or reviews displayed, no Instagram/social media links visible, no online reservation system for tasting room, no newsletter signup confirmation, limited product photography",
+      "brand_vibe": "Fun, retro, sustainable, adventurous, approachable craft spirit",
+      "primary_color": "#8B4513",
+      "secondary_color": "#F5DEB3",
+      "business_type": "craft_beverage",
+      "pain_point": "No clear business hours or reservation system makes it difficult for potential visitors to plan a tasting room visit.",
+      "chat_persona": "A friendly, enthusiastic brand ambassador who celebrates sustainability and fun adventures while helping customers learn about the vodka, book tasting room visits, and navigate event reservations.",
+      "cta_angle": "Visit the tasting room for a craft cocktail experience or reserve a private event",
+      "raw_text": "Shop Misadventure Vodka | World&#x27;s Most Sustainable Vodka Skip to main content Toggle menu Search About Us Food Menu Brunch Menu Order Online Cocktail Bar Prohibition Hour Cocktail Menu Happy Hour Menu Events &amp; Reservations Live Music Private Events Trivia Night Makers Market Murder Mystery Magic Night Sign in or Register Cart Search About Us Food Menu Brunch Menu Order Online Cocktail Bar Prohibition Hour Cocktail Menu Happy Hour Menu Events &amp; Reservations Live Music Private Events Trivia Night Makers Market Murder Mystery Magic Night Sign in or Register Cart The World's Most Sustainable Vodka Company Have you ever realized that most of our greatest memories come from the times when nothing seems to go as planned? We call that a misadventure, and it\u2019s what has led us here. Times are crazy, but they don\u2019t have to be. Step back into a simpler time and find out what your next adventure has in store. VISIT OUR TASTING ROOM BUY VODKA Reserve at Misadventure & Co. on Yelp MISADV"
+    },
+    "grade": {
+      "scores": {
+        "value_prop": 7,
+        "primary_cta": 8,
+        "contact": 7,
+        "social_proof": 8,
+        "hours": 2,
+        "chat": 8,
+        "gaps": 6
+      },
+      "total": 7,
+      "verdict": "Good \u2014 may not need us",
+      "worth_targeting": true
+    },
+    "site_dir": "/home/user/workspace/lvrg-engine/output/sites/misadventure",
+    "preview_url": "https://joshclifford.github.io/lvrg-previews/misadventure/index.html",
+    "email": {
+      "subject_a": "We built something for Misadventure & Co.",
+      "subject_b": "Visitors can't book your tasting room online",
+      "subject_c": "More cocktail bar reservations without the back-and-forth",
+      "body": "Turning surplus baked goods into carbon-negative vodka is one of the most clever sustainability plays I've seen in craft spirits \u2014 18 awards clearly agree.\n\nBut right now, someone planning a night out in Vista has no way to reserve a spot at your tasting room or even check your hours without calling.\n\nWe built you a free preview \u2014 a redesigned homepage and a live AI chat agent that answers questions about your vodka, recommends cocktails, and books tasting room reservations 24/7.\n\nSee it here: https://joshclifford.github.io/lvrg-previews/misadventure/index.html\n\nClaim it free by booking a 15-min call: https://theresandiego.com/advertise/\n\nJosh | LVRG Agency | lvrg.com | 619.361.7484",
+      "recommended_subject": "b",
+      "preview_url": "https://joshclifford.github.io/lvrg-previews/misadventure/index.html",
+      "prospect_id": "misadventure"
+    },
+    "instantly_pushed": false
+  }
+]

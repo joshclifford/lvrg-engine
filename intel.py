@@ -8,9 +8,12 @@ import requests
 import json
 import os
 import anthropic
-from config import ANTHROPIC_API_KEY, INTEL_DIR
+from config import INTEL_DIR
+import os
 
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def _get_client():
+    key = os.environ.get("ANTHROPIC_API_KEY") or ""
+    return anthropic.Anthropic(api_key=key)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -68,6 +71,7 @@ Extract and return a JSON object with these fields:
 
 Return ONLY valid JSON, no markdown, no explanation."""
 
+    client = _get_client()
     response = client.messages.create(
         model="claude-haiku-4-5",
         max_tokens=1500,
