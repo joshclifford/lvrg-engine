@@ -148,7 +148,9 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str) -> As
 @app.post("/build")
 async def build(req: BuildRequest):
     """Run the full engine pipeline for a domain. Returns SSE stream."""
-    domain = req.domain.strip().lower().replace("https://", "").replace("http://", "").rstrip("/")
+    domain = req.domain.strip().lower()
+    domain = domain.replace("https://", "").replace("http://", "")
+    domain = domain.split("/")[0].split("?")[0].strip()
     if not domain:
         raise HTTPException(status_code=400, detail="domain is required")
 
@@ -164,7 +166,7 @@ async def build(req: BuildRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "1.0.1"}
+    return {"status": "ok", "version": "1.0.2"}
 
 
 @app.get("/")

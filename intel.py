@@ -94,7 +94,10 @@ Return ONLY valid JSON, no markdown, no explanation."""
 def scrape_site(domain: str) -> dict:
     """Full intel gather for a prospect domain."""
     
-    domain = domain.strip().lower().replace("https://", "").replace("http://", "").rstrip("/")
+    # Strip protocol, path, query — keep only the hostname
+    domain = domain.strip().lower()
+    domain = domain.replace("https://", "").replace("http://", "")
+    domain = domain.split("/")[0].split("?")[0].strip()
     url = f"https://{domain}"
     print(f"  [intel] Fetching {url}...")
     
