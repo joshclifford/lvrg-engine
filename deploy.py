@@ -1,62 +1,67 @@
 """
 LVRG Lead Magnet Engine — GitHub Pages Deployer
-Clones lvrg-previews at runtime (Railway has no local workspace),
-copies the generated site, and pushes back.
+Uses GitHub Contents API to push files directly (no git clone needed).
 """
 
-import subprocess
-import shutil
 import os
-import tempfile
+import base64
+import json
+import urllib.request
+import urllib.error
 from config import GITHUB_USER, GITHUB_REPO, PREVIEW_BASE_URL
 
 
-def _run(cmd: str, cwd: str = None) -> tuple[int, str, str]:
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
-    return result.returncode, result.stdout.strip(), result.stderr.strip()
+def _github_request(method: str, path: str, body: dict = None) -> dict:
+    token = os.environ.get("GITHUB_TOKEN", "")
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{path}"
+    data = json.dumps(body).encode() if body else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("Authorization", f"token {token}")
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "lvrg-engine")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        raise RuntimeError(f"GitHub API {method} {path} → {e.code}: {body}")
+
+
+def _get_file_sha(path: str) -> str | None:
+    """Get existing file SHA (needed for updates). Returns None if file doesn't exist."""
+    try:
+        result = _github_request("GET", path)
+        return result.get("sha")
+    except RuntimeError:
+        return None
 
 
 def deploy_site(prospect_id: str, site_dir: str) -> str:
-    """Clone previews repo, copy site, push. Returns public URL."""
+    """Push site files to GitHub Pages via API. Returns public URL."""
 
-    github_token = os.environ.get("GITHUB_TOKEN", "")
-    if not github_token:
-        raise ValueError("GITHUB_TOKEN env var not set — cannot deploy to GitHub Pages")
+    print(f"  [deploy] Pushing {prospect_id} via GitHub API...")
 
-    print(f"  [deploy] Deploying {prospect_id} to GitHub Pages...")
+    # Read the generated index.html
+    index_path = os.path.join(site_dir, "index.html")
+    with open(index_path, "rb") as f:
+        content = base64.b64encode(f.read()).decode()
 
-    # Clone into a temp directory
-    tmp = tempfile.mkdtemp()
-    repo_url = f"https://{github_token}@github.com/{GITHUB_USER}/{GITHUB_REPO}.git"
+    github_path = f"{prospect_id}/index.html"
 
-    code, out, err = _run(f"git clone --depth 1 {repo_url} repo", cwd=tmp)
-    if code != 0:
-        raise RuntimeError(f"git clone failed: {err}")
+    # Check if file already exists (need SHA to update)
+    sha = _get_file_sha(github_path)
 
-    repo_path = os.path.join(tmp, "repo")
+    body = {
+        "message": f"Add preview: {prospect_id}",
+        "content": content,
+        "branch": "main",
+    }
+    if sha:
+        body["sha"] = sha
+        body["message"] = f"Update preview: {prospect_id}"
 
-    # Configure git identity
-    _run('git config user.email "engine@lvrg.com"', cwd=repo_path)
-    _run('git config user.name "LVRG Engine"', cwd=repo_path)
-
-    # Copy site files
-    dest = os.path.join(repo_path, prospect_id)
-    if os.path.exists(dest):
-        shutil.rmtree(dest)
-    shutil.copytree(site_dir, dest)
-
-    # Commit and push
-    _run(f"git add {prospect_id}/", cwd=repo_path)
-    code, out, err = _run(f'git commit -m "Add preview: {prospect_id}"', cwd=repo_path)
-    if code != 0 and "nothing to commit" not in out and "nothing to commit" not in err:
-        print(f"  [deploy] Commit note: {err or out}")
-
-    code, out, err = _run("git push origin main", cwd=repo_path)
-    if code != 0:
-        raise RuntimeError(f"git push failed: {err}")
-
-    # Cleanup
-    shutil.rmtree(tmp, ignore_errors=True)
+    _github_request("PUT", github_path, body)
 
     public_url = f"{PREVIEW_BASE_URL}/{prospect_id}/index.html"
     print(f"  [deploy] Live at: {public_url}")
