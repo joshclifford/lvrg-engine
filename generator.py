@@ -76,7 +76,7 @@ OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code blocks. 
     client = _get_client()
     response = client.messages.create(
         model="claude-opus-4-5",
-        max_tokens=8000,
+        max_tokens=12000,
         messages=[{"role": "user", "content": site_prompt}]
     )
     
@@ -87,6 +87,12 @@ OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code blocks. 
         html = html.split("\n", 1)[1]
         if html.endswith("```"):
             html = html.rsplit("```", 1)[0]
+    
+    # Ensure HTML is complete — if truncated, close it
+    if not html.rstrip().endswith("</html>"):
+        if not "</body>" in html:
+            html += "\n</body>"
+        html += "\n</html>"
     
     # Save site
     os.makedirs(SITES_DIR, exist_ok=True)
