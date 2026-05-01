@@ -36,13 +36,21 @@ class BuildRequest(BaseModel):
     no_deploy: bool = False
     offer: str = "Smart Site"
     cta: str = "Book a Call"
+    notes: str = ""
+
+
+class ChatRequest(BaseModel):
+    message: str
+    business_name: str
+    intel: dict  # full intel object baked into each widget
+    history: list = []  # [{"role": "user"|"assistant", "content": "..."}]
 
 
 def sse(type: str, **kwargs) -> str:
     return f"data: {json.dumps({'type': type, **kwargs})}\n\n"
 
 
-async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str) -> AsyncGenerator[str, None]:
+async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes: str = "") -> AsyncGenerator[str, None]:
     """Run the full engine pipeline, yielding SSE events."""
 
     loop = asyncio.get_event_loop()
@@ -78,7 +86,9 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str) -> As
         prospect_id = slugify(domain.split(".")[0]) or slugify(domain.replace(".", "-"))
 
         yield sse("log", text="Generating Smart Site with Claude...", level="info")
-        site_dir = await loop.run_in_executor(None, generate_site, intel, prospect_id)
+        if notes:
+            yield sse("log", text=f"Notes: {notes}", level="info")
+        site_dir = await loop.run_in_executor(None, generate_site, intel, prospect_id, notes)
         yield sse("log", text="Site generated", level="success")
 
         # ── Step 4: Deploy ───────────────────────────────────────────
@@ -153,7 +163,7 @@ async def build(req: BuildRequest):
         raise HTTPException(status_code=400, detail="domain is required")
 
     return StreamingResponse(
-        run_pipeline(domain, req.no_deploy, req.offer, req.cta),
+        run_pipeline(domain, req.no_deploy, req.offer, req.cta, req.notes),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -162,9 +172,47 @@ async def build(req: BuildRequest):
     )
 
 
+@app.post("/chat")
+async def chat(req: ChatRequest):
+    """AI chat endpoint for Smart Site widgets. Responds as the business."""
+    import anthropic
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    client = anthropic.Anthropic(api_key=key)
+
+    # Build system prompt from scraped intel
+    intel = req.intel
+    system = f"""You are the AI assistant for {intel.get('business_name', 'this business')}.
+Answer questions warmly and helpfully as a knowledgeable team member.
+Keep responses concise — 1-3 sentences. Never say you are an AI unless directly asked.
+
+BUSINESS DETAILS:
+- Name: {intel.get('business_name', '')}
+- Description: {intel.get('description', '')}
+- Services: {', '.join(intel.get('services') or [])}
+- Location: {intel.get('location', '')}
+- Phone: {intel.get('phone', '')}
+- Hours: {intel.get('hours', '')}
+- Social proof: {intel.get('social_proof', '')}
+- Main CTA: {intel.get('cta_angle', 'contact us')}
+
+If asked about booking, reservations, or appointments, direct them to call or visit.
+If you don't know something specific, say you'll have the team follow up."""
+
+    messages = req.history[-10:] + [{"role": "user", "content": req.message}]
+
+    response = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        system=system,
+        messages=messages,
+    )
+
+    return {"reply": response.content[0].text.strip()}
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "1.0.3"}
+    return {"status": "ok", "version": "1.1.0"}
 
 
 @app.get("/")

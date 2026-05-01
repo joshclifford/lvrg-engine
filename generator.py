@@ -15,12 +15,14 @@ def _get_client():
     return anthropic.Anthropic(api_key=key)
 
 
-def generate_site(intel: dict, prospect_id: str) -> str:
+def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     """Generate a complete 2-page HTML site for a prospect. Returns folder path."""
     
     print(f"  [generator] Generating site for {intel['business_name']}...")
     
-    site_prompt = f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.
+    notes_block = f"\n\nSPECIAL INSTRUCTIONS FROM CLIENT:\n{notes}\n" if notes else ""
+    
+    site_prompt = f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
 
 PROSPECT INTEL:
 - Business: {intel['business_name']}
@@ -78,7 +80,7 @@ SECTIONS (all using inline style= attributes):
 5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
 6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
 7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
-8. CHAT WIDGET (fixed bottom-right): circular button → 300x420 panel, opening message specific to their business (persona: {intel.get('chat_persona', 'friendly assistant')}), input + send button
+8. CHAT WIDGET: See exact implementation below — copy this verbatim at the end of <body>.
 9. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
 
 COPY RULES:
@@ -86,6 +88,36 @@ COPY RULES:
 - Reference {intel.get('location','').split(',')[0] if intel.get('location') else 'their city'} naturally in copy
 - Every CTA drives toward: {intel.get('cta_angle', 'booking a visit')}
 - Pain point to address: {intel.get('pain_point', '')}
+
+CHAT WIDGET — copy this EXACTLY at end of body, before </body>:
+<div id="lvrg-chat" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:sans-serif;">
+  <button id="lvrg-btn" onclick="lvrgToggle()" style="width:60px;height:60px;border-radius:50%;background:{intel.get('primary_color','#333')};border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;">
+    <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+  <div id="lvrg-panel" style="display:none;position:absolute;bottom:72px;right:0;width:320px;height:460px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;flex-direction:column;">
+    <div style="background:{intel.get('primary_color','#333')};padding:16px 20px;color:#fff;display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">{intel['business_name'][0]}</div>
+      <div><div style="font-weight:700;font-size:15px;">{intel['business_name']}</div><div style="font-size:12px;opacity:0.85;">AI Assistant • Online</div></div>
+    </div>
+    <div id="lvrg-msgs" style="flex:1;padding:16px;overflow-y:auto;background:#f8f8f8;display:flex;flex-direction:column;gap:10px;">
+      <div style="background:#fff;padding:12px 14px;border-radius:12px;border-bottom-left-radius:4px;font-size:14px;line-height:1.5;box-shadow:0 1px 4px rgba(0,0,0,0.06);">{intel.get('chat_persona','Hey there')}! I can help answer questions about {intel['business_name']}. What can I help you with?</div>
+    </div>
+    <div style="padding:12px;background:#fff;border-top:1px solid #eee;display:flex;gap:8px;">
+      <input id="lvrg-input" type="text" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')lvrgSend()" style="flex:1;padding:10px 14px;border-radius:20px;border:1px solid #ddd;font-size:14px;outline:none;">
+      <button onclick="lvrgSend()" style="width:40px;height:40px;border-radius:50%;background:{intel.get('primary_color','#333')};border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k != 'raw_text'}, ensure_ascii=False)};
+const _lvrgHistory = [];
+const _lvrgEndpoint = 'https://lvrg-engine-production.up.railway.app/chat';
+function lvrgToggle(){{const p=document.getElementById('lvrg-panel');p.style.display=p.style.display==='none'?'flex':'none';}}
+function lvrgAppend(role,text){{const d=document.getElementById('lvrg-msgs');const m=document.createElement('div');m.style.cssText=role==='user'?'background:{intel.get('primary_color','#333')};color:#fff;padding:10px 14px;border-radius:12px;border-bottom-right-radius:4px;font-size:14px;line-height:1.5;align-self:flex-end;max-width:85%;':'background:#fff;padding:12px 14px;border-radius:12px;border-bottom-left-radius:4px;font-size:14px;line-height:1.5;box-shadow:0 1px 4px rgba(0,0,0,0.06);max-width:85%;';m.textContent=text;d.appendChild(m);d.scrollTop=d.scrollHeight;}}
+async function lvrgSend(){{const inp=document.getElementById('lvrg-input');const msg=inp.value.trim();if(!msg)return;inp.value='';lvrgAppend('user',msg);_lvrgHistory.push({{role:'user',content:msg}});try{{const r=await fetch(_lvrgEndpoint,{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{message:msg,business_name:_lvrgIntel.business_name,intel:_lvrgIntel,history:_lvrgHistory.slice(-8)}})}});const d=await r.json();lvrgAppend('assistant',d.reply);_lvrgHistory.push({{role:'assistant',content:d.reply}})}}catch(e){{lvrgAppend('assistant','Sorry, something went wrong. Please call us directly at {intel.get('phone','')}.');}}}}
+</script>
 
 OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. Start with <!DOCTYPE html>"""
 
