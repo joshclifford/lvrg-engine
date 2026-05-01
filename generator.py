@@ -35,58 +35,59 @@ PROSPECT INTEL:
 - Primary color: {intel.get('primary_color', '#333')}
 - Business type: {intel.get('business_type', 'other')}
 - What's missing on their site: {intel.get('missing', 'chat, CTA, contact info')}
-- Raw site content: {intel.get('raw_markdown', '')[:1500]}
+- Raw site content: {intel.get('raw_text', '')[:2000]}
 
-BUILD a complete single-file HTML homepage (index.html). Requirements:
+BUILD a complete single-file HTML homepage (index.html).
 
-CRITICAL STRUCTURE RULE:
-Write the HTML in this exact order — DO NOT write a large <style> block first.
-Instead use a SHORT <style> block (max 80 lines) for variables and resets only,
-then write ALL HTML immediately, using style attributes for component-specific styling.
-This ensures the HTML body is never cut off.
+⚠️ CRITICAL OUTPUT RULE — READ FIRST:
+DO NOT write a large <style> block. Write a SHORT <style> (CSS reset + :root vars only, max 30 lines),
+then immediately write <body> with ALL styling as inline style= attributes on each element.
+This is mandatory — long <style> blocks get cut off before the HTML body is ever written.
 
-STRUCTURE:
-```
+REQUIRED FILE STRUCTURE:
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>...</title>
-  <link href="https://fonts.googleapis.com/..." rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{business name}} | {{tagline}}</title>
+  <link href="https://fonts.googleapis.com/css2?family=..." rel="stylesheet">
   <style>
-    /* ONLY: CSS reset, :root variables, body font. MAX 40 lines. */
     * {{ margin:0; padding:0; box-sizing:border-box; }}
-    :root {{ --primary: {intel.get('primary_color','#333')}; --accent: #c9a45c; }}
-    body {{ font-family: 'Montserrat', sans-serif; background: #fafafa; color: #222; }}
+    body {{ font-family: '...', sans-serif; }}
+    /* NOTHING ELSE IN STYLE — use inline styles on every element */
   </style>
 </head>
 <body>
-  <!-- ALL SECTIONS WITH INLINE STYLES -->
+  <!-- ALL CONTENT HERE WITH INLINE style= ATTRIBUTES -->
 </body>
 </html>
-```
 
-SECTIONS (all with inline style= attributes):
-1. CLAIM BAR: sticky top, black bg. "This site was built for [Business] by LVRG Agency" + gold "Claim This Site →" button → {BOOKING_URL}
-2. NAV: logo text + 3 nav links + CTA button  
-3. HERO: bold headline (5-8 words), subheadline, 2 CTA buttons, CSS gradient background
-4. SOCIAL PROOF: 3 stats in a row
-5. SERVICES: 3 cards
-6. TESTIMONIALS: 2 quotes
-7. CTA BANNER + chat widget area
-8. FOOTER: contact, hours, © LVRG Agency
+DESIGN:
+- Use primary color {intel.get('primary_color', '#333')} and secondary {intel.get('secondary_color', '#f5f5f5')} throughout
+- Brand vibe: {intel.get('brand_vibe', 'clean, modern')} — let this guide fonts, spacing, mood
+- Must look like a $5,000 professionally designed website
+- Use Google Fonts that match the brand vibe
+- NO external image URLs — use CSS gradients and background colors for visual sections
 
-CHAT WIDGET (fixed bottom-right, inline styles):
-- Button → opens 300x420 panel
-- Opening message specific to their business
-- Input + send button
+SECTIONS (all using inline style= attributes):
+1. CLAIM BAR: sticky top bar, black background. "This site was built for {intel['business_name']} by LVRG Agency" + gold "Claim This Site →" button → {BOOKING_URL}
+2. NAV: business name as logo, 3 nav links, primary CTA button
+3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs, CSS gradient background using brand colors
+4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}
+5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
+6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
+7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
+8. CHAT WIDGET (fixed bottom-right): circular button → 300x420 panel, opening message specific to their business (persona: {intel.get('chat_persona', 'friendly assistant')}), input + send button
+9. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
 
-COPY:
-- Fresh copy, not copied from their site
-- Punchy benefit-driven headline
-- Reference their city naturally
+COPY RULES:
+- Use their REAL business details, real services, real social proof
+- Reference {intel.get('location','').split(',')[0] if intel.get('location') else 'their city'} naturally in copy
+- Every CTA drives toward: {intel.get('cta_angle', 'booking a visit')}
+- Pain point to address: {intel.get('pain_point', '')}
 
-OUTPUT: Return ONLY complete HTML. No markdown. Start with <!DOCTYPE html>"""
+OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. Start with <!DOCTYPE html>"""
 
     client = _get_client()
     response = client.messages.create(
