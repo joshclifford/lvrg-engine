@@ -21,7 +21,7 @@ from generator import generate_site, generate_email
 from deploy import deploy_site
 from supabase_client import upsert_lead, log_event
 
-app = FastAPI(title="LVRG Engine API", version="1.0.0")
+app = FastAPI(title="LVRG Engine API", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
