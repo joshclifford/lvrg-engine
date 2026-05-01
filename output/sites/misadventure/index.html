@@ -1,318 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Misadventure & Co. | The World's Most Sustainable Vodka</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Josefin Sans', sans-serif; }
-    :root { --primary: #8B4513; --secondary: #F5DEB3; --dark: #1a1a1a; --cream: #FFF8F0; }
-    html { scroll-behavior: smooth; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misadventure & Co. | The World's Most Sustainable Vodka Company</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--brown:#8B4513;--wheat:#F5DEB3;--gold:#D4AF37;--dark:#1a1a1a;--bg:#FFF8F0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark)}
+</style>
 </head>
-<body style="background-color:#FFF8F0; color:#1a1a1a; overflow-x:hidden;">
+<body>
+<div style="position:fixed;top:0;left:0;width:100%;height:44px;background:#000;display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:10000">
+<span style="color:#fff;font-size:13px;font-weight:500">This site was built for Misadventure & Co. by LVRG Agency</span>
+<a href="https://theresandiego.com/advertise/" style="background:linear-gradient(135deg,#D4AF37,#c9a431);color:#000;padding:8px 20px;border-radius:50px;font-size:13px;font-weight:600;text-decoration:none;transition:transform 0.3s">Claim This Site →</a>
+</div>
 
-  <!-- CLAIM BAR -->
-  <div style="position:fixed; top:0; left:0; right:0; background:#000; padding:10px 20px; display:flex; justify-content:center; align-items:center; gap:20px; z-index:1000; flex-wrap:wrap;">
-    <span style="color:#fff; font-size:14px; letter-spacing:0.5px;">This site was built for Misadventure & Co. by <strong>LVRG Agency</strong></span>
-    <a href="https://theresandiego.com/advertise/" style="background:linear-gradient(135deg, #D4AF37, #FFD700); color:#000; padding:8px 20px; border-radius:25px; text-decoration:none; font-weight:600; font-size:13px; transition:transform 0.3s;">Claim This Site →</a>
-  </div>
+<nav style="position:fixed;top:44px;left:0;width:100%;height:80px;background:rgba(255,248,240,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-between;padding:0 60px;z-index:9999;border-bottom:1px solid rgba(139,69,19,0.1)">
+<div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#8B4513;letter-spacing:1px">MISADVENTURE & Co.</div>
+<div style="display:flex;align-items:center;gap:40px">
+<a href="#story" style="color:#1a1a1a;text-decoration:none;font-weight:500;font-size:15px">Our Story</a>
+<a href="#experiences" style="color:#1a1a1a;text-decoration:none;font-weight:500;font-size:15px">Experiences</a>
+<a href="#events" style="color:#1a1a1a;text-decoration:none;font-weight:500;font-size:15px">Events</a>
+<a href="#visit" style="background:#8B4513;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;transition:all 0.3s">Reserve Now</a>
+</div>
+</nav>
 
-  <!-- NAV -->
-  <nav style="position:fixed; top:42px; left:0; right:0; background:rgba(255,248,240,0.95); backdrop-filter:blur(10px); padding:15px 50px; display:flex; justify-content:space-between; align-items:center; z-index:999; border-bottom:1px solid rgba(139,69,19,0.1);">
-    <div style="font-family:'Playfair Display',serif; font-size:28px; font-weight:900; color:#8B4513; letter-spacing:1px;">MISADVENTURE <span style="font-weight:400;">&</span> Co.</div>
-    <div style="display:flex; align-items:center; gap:40px;">
-      <a href="#about" style="text-decoration:none; color:#1a1a1a; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Our Story</a>
-      <a href="#experiences" style="text-decoration:none; color:#1a1a1a; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Experiences</a>
-      <a href="#events" style="text-decoration:none; color:#1a1a1a; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase;">Events</a>
-      <a href="#contact" style="background:#8B4513; color:#fff; padding:12px 28px; border-radius:30px; text-decoration:none; font-weight:600; font-size:14px; letter-spacing:0.5px; text-transform:uppercase;">Reserve Now</a>
-    </div>
-  </nav>
+<section style="min-height:100vh;background:linear-gradient(135deg,#8B4513 0%,#6d3610 50%,#2d1a0e 100%);position:relative;display:flex;align-items:center;justify-content:center;padding:160px 60px 100px;overflow:hidden">
+<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 20% 80%,rgba(212,175,55,0.15) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(245,222,179,0.1) 0%,transparent 40%),radial-gradient(circle at 50% 50%,rgba(0,0,0,0.2) 0%,transparent 70%)"></div>
+<div style="position:relative;z-index:1;text-align:center;max-width:1000px">
+<div style="display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(212,175,55,0.5);padding:12px 28px;border-radius:50px;margin-bottom:40px">
+<span style="color:#D4AF37;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase">World's First Carbon-Negative Vodka</span>
+</div>
+<h1 style="font-family:'Playfair Display',serif;font-size:88px;font-weight:800;color:#fff;line-height:1.05;margin-bottom:30px;text-shadow:0 4px 60px rgba(0,0,0,0.3)">Where Great Stories Begin</h1>
+<p style="font-size:22px;color:rgba(255,255,255,0.85);max-width:650px;margin:0 auto 50px;line-height:1.7">Craft vodka distilled from rescued baked goods. Award-winning cocktails served in our Vista tasting room. Every sip saves the planet.</p>
+<div style="display:flex;gap:20px;justify-content:center">
+<a href="#visit" style="background:linear-gradient(135deg,#D4AF37,#b8962f);color:#1a1a1a;padding:18px 40px;border-radius:6px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 30px rgba(212,175,55,0.4)">Plan Your Visit</a>
+<a href="#story" style="background:transparent;border:2px solid rgba(255,255,255,0.6);color:#fff;padding:18px 40px;border-radius:6px;text-decoration:none;font-weight:600;font-size:16px">Discover Our Story</a>
+</div>
+</div>
+<div style="position:absolute;bottom:50px;left:50%;transform:translateX(-50%)">
+<svg width="24" height="40" viewBox="0 0 24 40" fill="none" style="animation:bounce 2s infinite">
+<rect x="1" y="1" width="22" height="38" rx="11" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+<circle cx="12" cy="12" r="4" fill="rgba(255,255,255,0.6)"/>
+</svg>
+</div>
+<style>@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(10px)}}</style>
+</section>
 
-  <!-- HERO -->
-  <section style="min-height:100vh; background:linear-gradient(135deg, #8B4513 0%, #A0522D 30%, #CD853F 60%, #F5DEB3 100%); display:flex; align-items:center; justify-content:center; padding:150px 50px 100px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22none%22 stroke=%22rgba(255,255,255,0.05)%22 stroke-width=%220.5%22/></svg>') repeat; background-size:100px 100px; opacity:0.5;"></div>
-    <div style="position:absolute; top:20%; right:10%; width:300px; height:300px; background:radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius:50%;"></div>
-    <div style="position:absolute; bottom:10%; left:5%; width:200px; height:200px; background:radial-gradient(circle, rgba(245,222,179,0.2) 0%, transparent 70%); border-radius:50%;"></div>
-    <div style="text-align:center; max-width:900px; position:relative; z-index:1;">
-      <div style="display:inline-block; background:rgba(0,0,0,0.2); padding:8px 25px; border-radius:30px; margin-bottom:30px;">
-        <span style="color:#F5DEB3; font-size:14px; letter-spacing:3px; text-transform:uppercase; font-weight:600;">World's First Carbon-Negative Vodka</span>
-      </div>
-      <h1 style="font-family:'Playfair Display',serif; font-size:72px; color:#fff; font-weight:900; line-height:1.1; margin-bottom:25px; text-shadow:2px 2px 30px rgba(0,0,0,0.2);">Where Sustainability Meets Your Next Great Story</h1>
-      <p style="font-size:22px; color:rgba(255,255,255,0.9); max-width:650px; margin:0 auto 45px; line-height:1.7; font-weight:300;">Crafted from rescued baked goods in Vista, CA. Award-winning vodka, craft cocktails, live music, and unforgettable experiences await at our tasting room.</p>
-      <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
-        <a href="#contact" style="background:#fff; color:#8B4513; padding:18px 45px; border-radius:35px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 10px 40px rgba(0,0,0,0.2); transition:transform 0.3s;">Visit Tasting Room</a>
-        <a href="#" style="background:transparent; color:#fff; padding:18px 45px; border-radius:35px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:1px; text-transform:uppercase; border:2px solid rgba(255,255,255,0.5);">Shop Vodka Online</a>
-      </div>
-    </div>
-  </section>
+<section style="background:#111;padding:50px 60px">
+<div style="max-width:1200px;margin:0 auto;display:flex;justify-content:center;align-items:center">
+<div style="flex:1;text-align:center;padding:20px 40px">
+<div style="font-family:'Playfair Display',serif;font-size:56px;font-weight:700;color:#D4AF37;line-height:1">18</div>
+<div style="color:#F5DEB3;font-size:14px;font-weight:500;margin-top:8px;text-transform:uppercase;letter-spacing:1px">Industry Awards</div>
+</div>
+<div style="width:1px;height:70px;background:linear-gradient(180deg,transparent,rgba(212,175,55,0.5),transparent)"></div>
+<div style="flex:1;text-align:center;padding:20px 40px">
+<div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#D4AF37;line-height:1.2">Carbon Negative</div>
+<div style="color:#F5DEB3;font-size:14px;font-weight:500;margin-top:8px;text-transform:uppercase;letter-spacing:1px">World's First Consumer Good</div>
+</div>
+<div style="width:1px;height:70px;background:linear-gradient(180deg,transparent,rgba(212,175,55,0.5),transparent)"></div>
+<div style="flex:1;text-align:center;padding:20px 40px">
+<div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#D4AF37;line-height:1.2">First & Only</div>
+<div style="color:#F5DEB3;font-size:14px;font-weight:500;margin-top:8px;text-transform:uppercase;letter-spacing:1px">Spirit from Rescued Baked Goods</div>
+</div>
+</div>
+</section>
 
-  <!-- SOCIAL PROOF BAR -->
-  <section style="background:#1a1a1a; padding:50px 20px;">
-    <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:40px;">
-      <div style="text-align:center;">
-        <div style="font-family:'Playfair Display',serif; font-size:56px; color:#D4AF37; font-weight:900;">18</div>
-        <div style="color:#F5DEB3; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-top:5px;">Awards Won</div>
-      </div>
-      <div style="width:1px; height:60px; background:rgba(245,222,179,0.2);"></div>
-      <div style="text-align:center; max-width:250px;">
-        <div style="font-family:'Playfair Display',serif; font-size:28px; color:#D4AF37; font-weight:700;">Carbon Negative</div>
-        <div style="color:#F5DEB3; font-size:14px; letter-spacing:1px; margin-top:5px;">World's First Consumer Good</div>
-      </div>
-      <div style="width:1px; height:60px; background:rgba(245,222,179,0.2);"></div>
-      <div style="text-align:center; max-width:250px;">
-        <div style="font-family:'Playfair Display',serif; font-size:28px; color:#D4AF37; font-weight:700;">First & Only</div>
-        <div style="color:#F5DEB3; font-size:14px; letter-spacing:1px; margin-top:5px;">Spirit Made from Excess Baked Goods</div>
-      </div>
-    </div>
-  </section>
+<section id="story" style="padding:140px 60px;background:#FFF8F0">
+<div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:center">
+<div>
+<div style="color:#D4AF37;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px">Our Story</div>
+<h2 style="font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#1a1a1a;line-height:1.15;margin-bottom:35px">Turning Waste Into Wonder</h2>
+<p style="font-size:18px;color:#444;line-height:1.9;margin-bottom:25px">Every year, billions of pounds of perfectly good baked goods are thrown away. We saw a problem—and an opportunity. By rescuing surplus bread, pastries, and baked goods from local bakeries, we've created the world's first carbon-negative vodka.</p>
+<p style="font-size:18px;color:#444;line-height:1.9;margin-bottom:35px">Our award-winning spirit isn't just about great taste—it's about rewriting the rules of sustainable spirits. Each bottle represents rescued ingredients, reduced emissions, and a commitment to proving that doing good and tasting great aren't mutually exclusive.</p>
+<div style="display:flex;gap:30px">
+<div>
+<div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#8B4513">2M+</div>
+<div style="font-size:14px;color:#666;margin-top:5px">Pounds Rescued</div>
+</div>
+<div>
+<div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#8B4513">-50%</div>
+<div style="font-size:14px;color:#666;margin-top:5px">Carbon vs Traditional</div>
+</div>
+</div>
+</div>
+<div style="display:flex;justify-content:center;align-items:center">
+<div style="position:relative;width:400px;height:400px">
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:400px;height:400px;border-radius:50%;background:linear-gradient(135deg,rgba(139,69,19,0.1),rgba(212,175,55,0.1))"></div>
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:320px;height:320px;border-radius:50%;border:2px solid rgba(139,69,19,0.2)"></div>
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:240px;height:240px;border-radius:50%;background:linear-gradient(135deg,#8B4513,#6d3610);display:flex;align-items:center;justify-content:center">
+<div style="width:160px;height:160px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center">
+<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#b8962f)"></div>
+</div>
+</div>
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:380px;height:380px;border-radius:50%;border:1px dashed rgba(212,175,55,0.3)"></div>
+</div>
+</div>
+</div>
+</section>
 
-  <!-- SERVICES -->
-  <section id="experiences" style="padding:120px 50px; background:#FFF8F0;">
-    <div style="max-width:1200px; margin:0 auto;">
-      <div style="text-align:center; margin-bottom:70px;">
-        <span style="color:#8B4513; font-size:14px; letter-spacing:3px; text-transform:uppercase; font-weight:600;">What We Offer</span>
-        <h2 style="font-family:'Playfair Display',serif; font-size:52px; color:#1a1a1a; font-weight:900; margin-top:15px;">Craft Your Perfect Misadventure</h2>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:35px;">
-        <!-- Card 1 -->
-        <div style="background:linear-gradient(180deg, #8B4513 0%, #6B3410 100%); border-radius:25px; padding:50px 40px; position:relative; overflow:hidden;">
-          <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(245,222,179,0.1); border-radius:50%;"></div>
-          <div style="width:70px; height:70px; background:#F5DEB3; border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:25px;">
-            <span style="font-size:32px;">🥃</span>
-          </div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#fff; font-weight:700; margin-bottom:15px;">Award-Winning Vodka</h3>
-          <p style="color:rgba(255,255,255,0.85); font-size:16px; line-height:1.8; margin-bottom:25px;">Our 18-time award-winning vodka transforms surplus baked goods into smooth, sustainable spirits you can feel good about drinking.</p>
-          <a href="#" style="color:#F5DEB3; text-decoration:none; font-weight:600; font-size:14px; letter-spacing:1px; display:flex; align-items:center; gap:8px;">Shop Online <span style="font-size:18px;">→</span></a>
-        </div>
-        <!-- Card 2 -->
-        <div style="background:#fff; border-radius:25px; padding:50px 40px; box-shadow:0 20px 60px rgba(139,69,19,0.1); position:relative; overflow:hidden; border:1px solid rgba(139,69,19,0.1);">
-          <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(139,69,19,0.05); border-radius:50%;"></div>
-          <div style="width:70px; height:70px; background:#8B4513; border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:25px;">
-            <span style="font-size:32px;">🍸</span>
-          </div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#1a1a1a; font-weight:700; margin-bottom:15px;">Craft Cocktail Bar</h3>
-          <p style="color:#666; font-size:16px; line-height:1.8; margin-bottom:25px;">Step into our retro-inspired bar featuring handcrafted cocktails, Prohibition Hour specials, and a menu designed to delight.</p>
-          <a href="#contact" style="color:#8B4513; text-decoration:none; font-weight:600; font-size:14px; letter-spacing:1px; display:flex; align-items:center; gap:8px;">View Cocktail Menu <span style="font-size:18px;">→</span></a>
-        </div>
-        <!-- Card 3 -->
-        <div style="background:#fff; border-radius:25px; padding:50px 40px; box-shadow:0 20px 60px rgba(139,69,19,0.1); position:relative; overflow:hidden; border:1px solid rgba(139,69,19,0.1);">
-          <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:rgba(139,69,19,0.05); border-radius:50%;"></div>
-          <div style="width:70px; height:70px; background:#8B4513; border-radius:20px; display:flex; align-items:center; justify-content:center; margin-bottom:25px;">
-            <span style="font-size:32px;">🎵</span>
-          </div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#1a1a1a; font-weight:700; margin-bottom:15px;">Tasting Room Events</h3>
-          <p style="color:#666; font-size:16px; line-height:1.8; margin-bottom:25px;">From live music to murder mysteries, trivia nights to magic shows—every visit becomes an unforgettable adventure.</p>
-          <a href="#events" style="color:#8B4513; text-decoration:none; font-weight:600; font-size:14px; letter-spacing:1px; display:flex; align-items:center; gap:8px;">Explore Events <span style="font-size:18px;">→</span></a>
-        </div>
-      </div>
-    </div>
-  </section>
+<section id="experiences" style="padding:140px 60px;background:linear-gradient(180deg,#FFF8F0,#f5ebe0)">
+<div style="max-width:1200px;margin:0 auto">
+<div style="text-align:center;margin-bottom:80px">
+<div style="color:#D4AF37;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px">Experiences</div>
+<h2 style="font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#1a1a1a">Three Ways to Enjoy</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:30px">
+<div style="background:linear-gradient(135deg,#8B4513,#5a2d0d);border-radius:16px;padding:50px 40px;color:#fff;position:relative;overflow:hidden">
+<div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,55,0.2),transparent 70%)"></div>
+<div style="width:70px;height:70px;background:linear-gradient(135deg,#D4AF37,#b8962f);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="#1a1a1a"><path d="M16 2L20 12H28L22 18L24 28L16 22L8 28L10 18L4 12H12L16 2Z"/></svg>
+</div>
+<h3 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:20px">Vodka Production & Sales</h3>
+<p style="font-size:16px;line-height:1.8;opacity:0.9;margin-bottom:30px">Tour our distillery, learn about our sustainable process, and take home bottles of our award-winning carbon-negative vodka.</p>
+<a href="#" style="color:#D4AF37;text-decoration:none;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px">Shop Our Spirits <svg width="16" height="16" viewBox="0 0 16 16" fill="#D4AF37"><path d="M6 3L11 8L6 13" stroke="#D4AF37" stroke-width="2" fill="none"/></svg></a>
+</div>
+<div style="background:#fff;border-radius:16px;padding:50px 40px;border:1px solid rgba(139,69,19,0.15);box-shadow:0 10px 60px rgba(0,0,0,0.06)">
+<div style="width:70px;height:70px;background:linear-gradient(135deg,rgba(139,69,19,0.1),rgba(212,175,55,0.1));border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="#8B4513"><path d="M10 4V8H8V28H24V8H22V4H10ZM12 6H20V8H12V6ZM10 10H22V26H10V10Z"/><rect x="13" y="14" width="6" height="2"/><rect x="13" y="18" width="6" height="2"/></svg>
+</div>
+<h3 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:20px">Craft Cocktail Bar</h3>
+<p style="font-size:16px;line-height:1.8;color:#555;margin-bottom:30px">Expert mixologists craft unforgettable cocktails using our house-made spirits. Classic recipes meet innovative sustainable spirits.</p>
+<a href="#" style="color:#8B4513;text-decoration:none;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px">View Menu <svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 3L11 8L6 13" stroke="#8B4513" stroke-width="2" fill="none"/></svg></a>
+</div>
+<div style="background:#fff;border-radius:16px;padding:50px 40px;border:1px solid rgba(139,69,19,0.15);box-shadow:0 10px 60px rgba(0,0,0,0.06)">
+<div style="width:70px;height:70px;background:linear-gradient(135deg,rgba(139,69,19,0.1),rgba(212,175,55,0.1));border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:30px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="#8B4513"><circle cx="16" cy="16" r="10" stroke="#8B4513" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="4"/><path d="M16 6V10M16 22V26M6 16H10M22 16H26" stroke="#8B4513" stroke-width="2"/></svg>
+</div>
+<h3 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:20px">Tasting Room Events</h3>
+<p style="font-size:16px;line-height:1.8;color:#555;margin-bottom:30px">From live music to murder mysteries, our events transform ordinary evenings into extraordinary adventures worth remembering.</p>
+<a href="#events" style="color:#8B4513;text-decoration:none;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px">See Events <svg width="16" height="16" viewBox="0 0 16 16"><path d="M6 3L11 8L6 13" stroke="#8B4513" stroke-width="2" fill="none"/></svg></a>
+</div>
+</div>
+</div>
+</section>
 
-  <!-- EVENTS SECTION -->
-  <section id="events" style="padding:100px 50px; background:linear-gradient(135deg, #F5DEB3 0%, #FFF8F0 100%);">
-    <div style="max-width:1100px; margin:0 auto;">
-      <div style="text-align:center; margin-bottom:60px;">
-        <span style="color:#8B4513; font-size:14px; letter-spacing:3px; text-transform:uppercase; font-weight:600;">Weekly Entertainment</span>
-        <h2 style="font-family:'Playfair Display',serif; font-size:48px; color:#1a1a1a; font-weight:900; margin-top:15px;">Plan Your Visit</h2>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:20px;">
-        <div style="background:#fff; padding:30px 25px; border-radius:15px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <div style="font-size:28px; margin-bottom:10px;">🎤</div>
-          <h4 style="font-family:'Playfair Display',serif; color:#8B4513; font-size:18px; font-weight:700;">Live Music</h4>
-          <p style="color:#666; font-size:14px; margin-top:8px;">Weekly performances</p>
-        </div>
-        <div style="background:#fff; padding:30px 25px; border-radius:15px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <div style="font-size:28px; margin-bottom:10px;">🧠</div>
-          <h4 style="font-family:'Playfair Display',serif; color:#8B4513; font-size:18px; font-weight:700;">Trivia Night</h4>
-          <p style="color:#666; font-size:14px; margin-top:8px;">Test your knowledge</p>
-        </div>
-        <div style="background:#fff; padding:30px 25px; border-radius:15px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <div style="font-size:28px; margin-bottom:10px;">🔍</div>
-          <h4 style="font-family:'Playfair Display',serif; color:#8B4513; font-size:18px; font-weight:700;">Murder Mystery</h4>
-          <p style="color:#666; font-size:14px; margin-top:8px;">Solve the case</p>
-        </div>
-        <div style="background:#fff; padding:30px 25px; border-radius:15px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <div style="font-size:28px; margin-bottom:10px;">✨</div>
-          <h4 style="font-family:'Playfair Display',serif; color:#8B4513; font-size:18px; font-weight:700;">Magic Night</h4>
-          <p style="color:#666; font-size:14px; margin-top:8px;">Be amazed</p>
-        </div>
-        <div style="background:#fff; padding:30px 25px; border-radius:15px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
-          <div style="font-size:28px; margin-bottom:10px;">🛍️</div>
-          <h4 style="font-family:'Playfair Display',serif; color:#8B4513; font-size:18px; font-weight:700;">Makers Market</h4>
-          <p style="color:#666; font-size:14px; margin-top:8px;">Local artisans</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<section id="events" style="padding:140px 60px;background:#FFF8F0">
+<div style="max-width:1200px;margin:0 auto">
+<div style="text-align:center;margin-bottom:80px">
+<div style="color:#D4AF37;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px">Events</div>
+<h2 style="font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#1a1a1a">Plan Your Visit</h2>
+<p style="font-size:18px;color:#666;max-width:600px;margin:20px auto 0">Every night brings a new adventure at our Vista tasting room</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:24px">
+<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.06);border:1px solid rgba(139,69,19,0.1)">
+<div style="background:linear-gradient(135deg,#8B4513,#6d3610);padding:35px;display:flex;align-items:center;justify-content:center">
+<svg width="48" height="48" viewBox="0 0 48 48" fill="#F5DEB3"><circle cx="24" cy="20" r="8"/><path d="M12 40C12 32 17 28 24 28C31 28 36 32 36 40" stroke="#F5DEB3" stroke-width="3" fill="none"/><path d="M8 20L14 24M40 20L34 24M24 8V14" stroke="#D4AF37" stroke-width="2"/></svg>
+</div>
+<div style="padding:25px;text-align:center">
+<h4 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Live Music</h4>
+<p style="font-size:14px;color:#666">Local artists every weekend</p>
+</div>
+</div>
+<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.06);border:1px solid rgba(139,69,19,0.1)">
+<div style="background:linear-gradient(135deg,#8B4513,#6d3610);padding:35px;display:flex;align-items:center;justify-content:center">
+<svg width="48" height="48" viewBox="0 0 48 48" fill="#F5DEB3"><circle cx="24" cy="24" r="16" stroke="#F5DEB3" stroke-width="3" fill="none"/><text x="24" y="30" text-anchor="middle" font-size="18" fill="#D4AF37">?</text></svg>
+</div>
+<div style="padding:25px;text-align:center">
+<h4 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Trivia Night</h4>
+<p style="font-size:14px;color:#666">Test your knowledge</p>
+</div>
+</div>
+<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.06);border:1px solid rgba(139,69,19,0.1)">
+<div style="background:linear-gradient(135deg,#8B4513,#6d3610);padding:35px;display:flex;align-items:center;justify-content:center">
+<svg width="48" height="48" viewBox="0 0 48 48" fill="#F5DEB3"><path d="M24 8L28 20H40L30 28L34 40L24 32L14 40L18 28L8 20H20L24 8Z" stroke="#D4AF37" stroke-width="2" fill="none"/><circle cx="24" cy="24" r="6" fill="#F5DEB3"/></svg>
+</div>
+<div style="padding:25px;text-align:center">
+<h4 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Murder Mystery</h4>
+<p style="font-size:14px;color:#666">Interactive whodunit</p>
+</div>
+</div>
+<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.06);border:1px solid rgba(139,69,19,0.1)">
+<div style="background:linear-gradient(135deg,#8B4513,#6d3610);padding:35px;display:flex;align-items:center;justify-content:center">
+<svg width="48" height="48" viewBox="0 0 48 48" fill="#F5DEB3"><path d="M20 40L24 8L28 40" stroke="#F5DEB3" stroke-width="3" fill="none"/><circle cx="24" cy="8" r="4" fill="#D4AF37"/><path d="M16 24H32" stroke="#D4AF37" stroke-width="2"/></svg>
+</div>
+<div style="padding:25px;text-align:center">
+<h4 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Magic Night</h4>
+<p style="font-size:14px;color:#666">Close-up illusions</p>
+</div>
+</div>
+<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.06);border:1px solid rgba(139,69,19,0.1)">
+<div style="background:linear-gradient(135deg,#8B4513,#6d3610);padding:35px;display:flex;align-items:center;justify-content:center">
+<svg width="48" height="48" viewBox="0 0 48 48" fill="#F5DEB3"><rect x="12" y="16" width="24" height="20" rx="2" stroke="#F5DEB3" stroke-width="3" fill="none"/><path d="M18 22V30M24 22V30M30 22V30" stroke="#D4AF37" stroke-width="2"/></svg>
+</div>
+<div style="padding:25px;text-align:center">
+<h4 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Makers Market</h4>
+<p style="font-size:14px;color:#666">Local artisan vendors</p>
+</div>
+</div>
+</div>
+</div>
+</section>
 
-  <!-- TESTIMONIALS -->
-  <section style="padding:120px 50px; background:#1a1a1a;">
-    <div style="max-width:1100px; margin:0 auto;">
-      <div style="text-align:center; margin-bottom:70px;">
-        <span style="color:#D4AF37; font-size:14px; letter-spacing:3px; text-transform:uppercase; font-weight:600;">What People Are Saying</span>
-        <h2 style="font-family:'Playfair Display',serif; font-size:48px; color:#fff; font-weight:900; margin-top:15px;">Stories from the Bar</h2>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:35px;">
-        <!-- Testimonial 1 -->
-        <div style="background:linear-gradient(135deg, rgba(139,69,19,0.3) 0%, rgba(139,69,19,0.1) 100%); border-radius:25px; padding:45px 40px; border:1px solid rgba(245,222,179,0.2);">
-          <div style="color:#D4AF37; font-size:48px; font-family:Georgia,serif; line-height:1;">"</div>
-          <p style="color:#fff; font-size:18px; line-height:1.8; margin:15px 0 30px; font-style:italic;">The smoothest vodka I've ever tasted, and knowing it's carbon-negative makes every sip guilt-free. The cocktail bar atmosphere is pure vintage charm!</p>
-          <div style="display:flex; align-items:center; gap:15px;">
-            <div style="width:50px; height:50px; background:linear-gradient(135deg, #8B4513, #D4AF37); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">MC</div>
-            <div>
-              <div style="color:#F5DEB3; font-weight:600;">Michael C.</div>
-              <div style="color:rgba(245,222,179,0.6); font-size:14px;">Vista Local</div>
-            </div>
-          </div>
-        </div>
-        <!-- Testimonial 2 -->
-        <div style="background:linear-gradient(135deg, rgba(139,69,19,0.3) 0%, rgba(139,69,19,0.1) 100%); border-radius:25px; padding:45px 40px; border:1px solid rgba(245,222,179,0.2);">
-          <div style="color:#D4AF37; font-size:48px; font-family:Georgia,serif; line-height:1;">"</div>
-          <p style="color:#fff; font-size:18px; line-height:1.8; margin:15px 0 30px; font-style:italic;">We hosted our company event here and it was unforgettable. The staff was incredible, the cocktails were creative, and everyone's still talking about it weeks later.</p>
-          <div style="display:flex; align-items:center; gap:15px;">
-            <div style="width:50px; height:50px; background:linear-gradient(135deg, #8B4513, #D4AF37); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">SR</div>
-            <div>
-              <div style="color:#F5DEB3; font-weight:600;">Sarah R.</div>
-              <div style="color:rgba(245,222,179,0.6); font-size:14px;">Private Event Host</div>
-            </div>
-          </div>
-        </div>
-        <!-- Testimonial 3 -->
-        <div style="background:linear-gradient(135deg, rgba(139,69,19,0.3) 0%, rgba(139,69,19,0.1) 100%); border-radius:25px; padding:45px 40px; border:1px solid rgba(245,222,179,0.2);">
-          <div style="color:#D4AF37; font-size:48px; font-family:Georgia,serif; line-height:1;">"</div>
-          <p style="color:#fff; font-size:18px; line-height:1.8; margin:15px 0 30px; font-style:italic;">Finally, a place that combines great drinks with an actual mission. The trivia nights are a blast and knowing I'm supporting sustainability? That's the cherry on top.</p>
-          <div style="display:flex; align-items:center; gap:15px;">
-            <div style="width:50px; height:50px; background:linear-gradient(135deg, #8B4513, #D4AF37); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">JT</div>
-            <div>
-              <div style="color:#F5DEB3; font-weight:600;">Jason T.</div>
-              <div style="color:rgba(245,222,179,0.6); font-size:14px;">Trivia Night Regular</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<section style="padding:140px 60px;background:#1a1a1a">
+<div style="max-width:1200px;margin:0 auto">
+<div style="text-align:center;margin-bottom:80px">
+<div style="color:#D4AF37;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:20px">Testimonials</div>
+<h2 style="font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#fff">What Adventurers Say</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:30px">
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(212,175,55,0.2);border-radius:16px;padding:45px">
+<div style="display:flex;gap:4px;margin-bottom:25px">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+</div>
+<p style="font-size:17px;color:#F5DEB3;line-height:1.9;margin-bottom:30px;font-style:italic">"Knowing that every sip supports their carbon-negative mission makes the cocktails taste even better. Finally, a spirits company that actually walks the sustainability talk. The tasting room is gorgeous too!"</p>
+<div style="display:flex;align-items:center;gap:15px">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8B4513,#D4AF37);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px">MR</div>
+<div>
+<div style="color:#fff;font-weight:600">Marcus R.</div>
+<div style="color:#888;font-size:14px">San Diego, CA</div>
+</div>
+</div>
+</div>
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(212,175,55,0.2);border-radius:16px;padding:45px">
+<div style="display:flex;gap:4px;margin-bottom:25px">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+</div>
+<p style="font-size:17px;color:#F5DEB3;line-height:1.9;margin-bottom:30px;font-style:italic">"We booked our company party here and it was flawless. The private event space, custom cocktail menu, and knowledgeable staff made everyone feel like VIPs. Already planning our next one!"</p>
+<div style="display:flex;align-items:center;gap:15px">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#8B4513);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px">JT</div>
+<div>
+<div style="color:#fff;font-weight:600">Jennifer T.</div>
+<div style="color:#888;font-size:14px">Carlsbad, CA</div>
+</div>
+</div>
+</div>
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(212,175,55,0.2);border-radius:16px;padding:45px">
+<div style="display:flex;gap:4px;margin-bottom:25px">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#D4AF37"><path d="M10 2L12.5 7.5L18 8L14 12L15 18L10 15L5 18L6 12L2 8L7.5 7.5L10 2Z"/></svg>
+</div>
+<p style="font-size:17px;color:#F5DEB3;line-height:1.9;margin-bottom:30px;font-style:italic">"Trivia night here is our new weekly tradition. Great drinks, fun crowd, and the competitive atmosphere is perfect. Plus their themed cocktails during special events are always creative!"</p>
+<div style="display:flex;align-items:center;gap:15px">
+<div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#8B4513,#D4AF37);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px">DK</div>
+<div>
+<div style="color:#fff;font-weight:600">David K.</div>
+<div style="color:#888;font-size:14px">Vista, CA</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
 
-  <!-- CTA BANNER -->
-  <section style="padding:100px 50px; background:linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%); position:relative; overflow:hidden;">
-    <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2220%22 y=%2220%22 width=%2260%22 height=%2260%22 fill=%22none%22 stroke=%22rgba(255,255,255,0.03)%22 stroke-width=%220.5%22 transform=%22rotate(45 50 50)%22/></svg>') repeat; background-size:50px 50px;"></div>
-    <div style="max-width:900px; margin:0 auto; text-align:center; position:relative; z-index:1;">
-      <h2 style="font-family:'Playfair Display',serif; font-size:52px; color:#fff; font-weight:900; line-height:1.2; margin-bottom:25px;">Ready for Your Next Misadventure?</h2>
-      <p style="color:rgba(255,255,255,0.9); font-size:20px; line-height:1.7; margin-bottom:45px; max-width:700px; margin-left:auto; margin-right:auto;">Visit us at 2420 Grand Ave in Vista for craft cocktails, live entertainment, and the world's most sustainable vodka. Book your tasting room experience or reserve a private event today.</p>
-      <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
-        <a href="#contact" style="background:#fff; color:#8B4513; padding:18px 45px; border-radius:35px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 10px 40px rgba(0,0,0,0.2);">Reserve Your Table</a>
-        <a href="#" style="background:transparent; color:#fff; padding:18px 45px; border-radius:35px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:1px; text-transform:uppercase; border:2px solid rgba(255,255,255,0.5);">Order Vodka Online</a>
-      </div>
-    </div>
-  </section>
+<section id="visit" style="padding:120px 60px;background:linear-gradient(135deg,#8B4513,#5a2d0d,#2d1a0e);position:relative;overflow:hidden">
+<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 10% 50%,rgba(212,175,55,0.15),transparent 50%),radial-gradient(circle at 90% 50%,rgba(245,222,179,0.1),transparent 50%)"></div>
+<div style="max-width:900px;margin:0 auto;text-align:center;position:relative;z-index:1">
+<h2 style="font-family:'Playfair Display',serif;font-size:60px;font-weight:700;color:#fff;margin-bottom:25px">Ready for Your Next Misadventure?</h2>
+<p style="font-size:20px;color:rgba(255,255,255,0.85);max-width:600px;margin:0 auto 45px;line-height:1.8">Visit us in Vista, California and discover why we've won 18 industry awards. Taste the world's most sustainable vodka and create memories worth sharing.</p>
+<div style="display:flex;gap:20px;justify-content:center">
+<a href="tel:7605363271" style="background:linear-gradient(135deg,#D4AF37,#b8962f);color:#1a1a1a;padding:20px 45px;border-radius:8px;text-decoration:none;font-weight:700;font-size:17px;box-shadow:0 4px 30px rgba(212,175,55,0.4)">Call to Reserve</a>
+<a href="#" style="background:transparent;border:2px solid rgba(255,255,255,0.6);color:#fff;padding:20px 45px;border-radius:8px;text-decoration:none;font-weight:600;font-size:17px">Get Directions</a>
+</div>
+</div>
+</section>
 
-  <!-- CONTACT/FOOTER SECTION -->
-  <section id="contact" style="padding:80px 50px; background:#1a1a1a;">
-    <div style="max-width:1100px; margin:0 auto;">
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:50px; margin-bottom:60px;">
-        <!-- Location -->
-        <div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#fff; font-weight:700; margin-bottom:25px;">Visit Us</h3>
-          <p style="color:#F5DEB3; font-size:16px; line-height:1.8; margin-bottom:15px;">
-            <strong style="color:#D4AF37;">Address:</strong><br>
-            2420 Grand Ave. Suite C<br>
-            Vista, CA 92081
-          </p>
-          <p style="color:#F5DEB3; font-size:16px; line-height:1.8; margin-bottom:15px;">
-            <strong style="color:#D4AF37;">Phone:</strong><br>
-            <a href="tel:7605363271" style="color:#F5DEB3; text-decoration:none;">(760) 536-3271</a>
-          </p>
-          <p style="color:#F5DEB3; font-size:16px; line-height:1.8;">
-            <strong style="color:#D4AF37;">Hours:</strong><br>
-            Call or visit for current hours<br>
-            <em style="font-size:14px; color:rgba(245,222,179,0.7);">Check our events calendar for special hours</em>
-          </p>
-        </div>
-        <!-- Quick Links -->
-        <div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#fff; font-weight:700; margin-bottom:25px;">Quick Links</h3>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <a href="#" style="color:#F5DEB3; text-decoration:none; font-size:16px; transition:color 0.3s;">Cocktail Menu</a>
-            <a href="#" style="color:#F5DEB3; text-decoration:none; font-size:16px;">Food Menu</a>
-            <a href="#" style="color:#F5DEB3; text-decoration:none; font-size:16px;">Prohibition Hour</a>
-            <a href="#" style="color:#F5DEB3; text-decoration:none; font-size:16px;">Private Events</a>
-            <a href="#" style="color:#F5DEB3; text-decoration:none; font-size:16px;">Shop Vodka</a>
-          </div>
-        </div>
-        <!-- Newsletter -->
-        <div>
-          <h3 style="font-family:'Playfair Display',serif; font-size:28px; color:#fff; font-weight:700; margin-bottom:25px;">Stay Updated</h3>
-          <p style="color:#F5DEB3; font-size:16px; line-height:1.7; margin-bottom:20px;">Get notified about live music, special events, and exclusive offers.</p>
-          <div style="display:flex; gap:10px;">
-            <input type="email" placeholder="Your email" style="flex:1; padding:14px 20px; border-radius:30px; border:none; font-size:15px; font-family:'Josefin Sans',sans-serif;">
-            <button style="background:#8B4513; color:#fff; padding:14px 25px; border-radius:30px; border:none; font-weight:600; cursor:pointer; font-family:'Josefin Sans',sans-serif;">Join</button>
-          </div>
-        </div>
-      </div>
-      <!-- Footer Bottom -->
-      <div style="border-top:1px solid rgba(245,222,179,0.2); padding-top:40px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
-        <div style="font-family:'Playfair Display',serif; font-size:24px; font-weight:900; color:#8B4513;">MISADVENTURE <span style="font-weight:400;">&</span> Co.</div>
-        <p style="color:rgba(245,222,179,0.6); font-size:14px;">© 2024 Misadventure & Co. | Website by <a href="https://theresandiego.com/advertise/" style="color:#D4AF37; text-decoration:none; font-weight:600;">LVRG Agency</a></p>
-      </div>
-    </div>
-  </section>
+<footer style="background:#111;padding:80px 60px 0">
+<div style="max-width:1200px;margin:0 auto">
+<div style="display:grid;grid-template-columns:1.5fr 1fr 1.5fr;gap:60px;padding-bottom:60px;border-bottom:1px solid rgba(255,255,255,0.1)">
+<div>
+<div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#D4AF37;margin-bottom:25px">MISADVENTURE & Co.</div>
+<p style="color:#888;line-height:1.8;margin-bottom:20px">2420 Grand Ave. Suite C<br>Vista, CA 92081</p>
+<p style="color:#888;margin-bottom:8px">Phone: <a href="tel:7605363271" style="color:#F5DEB3;text-decoration:none">(760) 536-3271</a></p>
+</div>
+<div>
+<h4 style="color:#fff;font-size:16px;font-weight:600;margin-bottom:25px;text-transform:uppercase;letter-spacing:1px">Quick Links</h4>
+<div style="display:flex;flex-direction:column;gap:15px">
+<a href="#story" style="color:#888;text-decoration:none;font-size:15px">Our Story</a>
+<a href="#experiences" style="color:#888;text-decoration:none;font-size:15px">Experiences</a>
+<a href="#events" style="color:#888;text-decoration:none;font-size:15px">Events</a>
+<a href="#" style="color:#888;text-decoration:none;font-size:15px">Private Events</a>
+<a href="#" style="color:#888;text-decoration:none;font-size:15px">Shop</a>
+</div>
+</div>
+<div>
+<h4 style="color:#fff;font-size:16px;font-weight:600;margin-bottom:25px;text-transform:uppercase;letter-spacing:1px">Stay Updated</h4>
+<p style="color:#888;font-size:15px;margin-bottom:20px;line-height:1.7">Get the latest on events, new releases, and exclusive offers.</p>
+<div style="display:flex;gap:12px">
+<input type="email" placeholder="Enter your email" style="flex:1;padding:16px 20px;border:1px solid rgba(255,255,255,0.2);border-radius:8px;background:rgba(255,255,255,0.05);color:#fff;font-size:15px;outline:none">
+<button style="background:linear-gradient(135deg,#D4AF37,#b8962f);color:#1a1a1a;padding:16px 28px;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px">Subscribe</button>
+</div>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:30px 0">
+<div style="color:#666;font-size:14px">© 2025 Misadventure & Co. | Website by LVRG Agency</div>
+<div style="display:flex;gap:20px">
+<a href="#" style="color:#666;text-decoration:none;font-size:14px">Privacy</a>
+<a href="#" style="color:#666;text-decoration:none;font-size:14px">Terms</a>
+</div>
+</div>
+</div>
+</footer>
 
-  <!-- CHAT WIDGET -->
-  <div id="chatWidget" style="position:fixed; bottom:25px; right:25px; z-index:1001;">
-    <!-- Chat Button -->
-    <button id="chatBtn" onclick="toggleChat()" style="width:65px; height:65px; border-radius:50%; background:linear-gradient(135deg, #8B4513, #A0522D); border:none; cursor:pointer; box-shadow:0 5px 25px rgba(139,69,19,0.4); display:flex; align-items:center; justify-content:center; transition:transform 0.3s;">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-      </svg>
-    </button>
-    <!-- Chat Panel -->
-    <div id="chatPanel" style="display:none; position:absolute; bottom:80px; right:0; width:320px; height:450px; background:#fff; border-radius:20px; box-shadow:0 15px 50px rgba(0,0,0,0.2); overflow:hidden; flex-direction:column;">
-      <!-- Header -->
-      <div style="background:linear-gradient(135deg, #8B4513, #A0522D); padding:20px; color:#fff;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="width:45px; height:45px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;">🥃</div>
-          <div>
-            <div style="font-weight:700; font-size:16px;">Misadventure Concierge</div>
-            <div style="font-size:12px; opacity:0.9;">Online now • Ready to help</div>
-          </div>
-        </div>
-      </div>
-      <!-- Messages -->
-      <div style="flex:1; padding:20px; overflow-y:auto; background:#f9f9f9;">
-        <div style="background:#fff; padding:15px; border-radius:15px; border-bottom-left-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:15px;">
-          <p style="color:#333; font-size:14px; line-height:1.6; margin:0;">Hey there, fellow adventurer! 🎉 Welcome to Misadventure & Co.!</p>
-        </div>
-        <div style="background:#fff; padding:15px; border-radius:15px; border-bottom-left-radius:5px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-          <p style="color:#333; font-size:14px; line-height:1.6; margin:0;">I'm here to help you discover our carbon-negative vodka, book a tasting room visit, or find the perfect event. What can I help you with today?</p>
-        </div>
-      </div>
-      <!-- Input -->
-      <div style="padding:15px; background:#fff; border-top:1px solid #eee;">
-        <div style="display:flex; gap:10px;">
-          <input type="text" placeholder="Type your message..." style="flex:1; padding:12px 18px; border-radius:25px; border:1px solid #ddd; font-size:14px; font-family:'Josefin Sans',sans-serif;">
-          <button style="width:45px; height:45px; border-radius:50%; background:#8B4513; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+<div id="chatWidget" style="position:fixed;bottom:30px;right:30px;z-index:10000">
+<div id="chatPanel" style="display:none;width:360px;height:500px;background:#fff;border-radius:20px;box-shadow:0 20px 80px rgba(0,0,0,0.25);overflow:hidden;flex-direction:column;margin-bottom:15px">
+<div style="background:linear-gradient(135deg,#8B4513,#5a2d0d);padding:25px;display:flex;align-items:center;gap:15px">
+<div style="width:45px;height:45px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z"/></svg>
+</div>
+<div style="flex:1">
+<div style="color:#fff;font-weight:700;font-size:17px">Misadventure & Co.</div>
+<div style="color:rgba(255,255,255,0.8);font-size:13px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:#4ade80;border-radius:50%;display:inline-block"></span>AI Concierge</div>
+</div>
+<button onclick="toggleChat()" style="background:none;border:none;cursor:pointer;padding:5px">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="rgba(255,255,255,0.8)"><path d="M15 5L5 15M5 5L15 15" stroke="rgba(255,255,255,0.8)" stroke-width="2" fill="none"/></svg>
+</button>
+</div>
+<div style="flex:1;padding:25px;overflow-y:auto;background:#f9f9f9">
+<div style="display:flex;gap:12px;margin-bottom:20px">
+<div style="width:36px;height:36px;background:linear-gradient(135deg,#8B4513,#D4AF37);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L15 8H21L16 13L18 20L12 16L6 20L8 13L3 8H9L12 2Z"/></svg>
+</div>
+<div style="background:#fff;border-radius:16px;border-top-left-radius:4px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,0.06);max-width:240px">
+<p style="font-size:14px;color:#333;line-height:1.6;margin:0">Hey there, adventurer! I can help you book a tasting room visit, find out about tonight's events, or tell you about our award-winning vodka. What can I help with?</p>
+</div>
+</div>
+</div>
+<div style="padding:15px;background:#fff;border-top:1px solid #eee;display:flex;gap:10px">
+<input type="text" placeholder="Type your message..." style="flex:1;padding:14px 18px;border:1px solid #e5e5e5;border-radius:30px;font-size:14px;outline:none;background:#f9f9f9">
+<button style="width:48px;height:48px;background:linear-gradient(135deg,#8B4513,#6d3610);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"/></svg>
+</button>
+</div>
+</div>
+<button id="chatToggle" onclick="toggleChat()" style="width:65px;height:65px;background:linear-gradient(135deg,#8B4513,#5a2d0d);border:none;border-radius:50%;cursor:pointer;box-shadow:0 8px 30px rgba(139,69,19,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.3s">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM20 16H6L4 18V4H20V16Z"/></svg>
+</button>
+</div>
 
-  <script>
-    function toggleChat() {
-      const panel = document.getElementById('chatPanel');
-      if (panel.style.display === 'none') {
-        panel.style.display = 'flex';
-      } else {
-        panel.style.display = 'none';
-      }
-    }
-  </script>
-
+<script>
+function toggleChat() {
+const panel = document.getElementById('chatPanel');
+const toggle = document.getElementById('chatToggle');
+if (panel.style.display === 'none' || panel.style.display === '') {
+panel.style.display = 'flex';
+toggle.style.transform = 'scale(0.9)';
+} else {
+panel.style.display = 'none';
+toggle.style.transform = 'scale(1)';
+}
+}
+</script>
 </body>
 </html>

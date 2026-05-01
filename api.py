@@ -19,9 +19,42 @@ from pydantic import BaseModel
 from intel import scrape_site, grade_site
 from generator import generate_site, generate_email
 from deploy import deploy_site
-from supabase_client import upsert_lead, log_event
+from supabase_client import upsert_lead, log_event, update_engine_queue_result
 
-app = FastAPI(title="LVRG Engine API", version="1.1.0")
+app = FastAPI(title="LVRG Engine API", version="1.2.0")
+
+
+@app.on_event("startup")
+async def run_migrations():
+    """Add any missing columns to engine_queue on startup."""
+    import urllib.request, urllib.error, json as _json
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
+    SERVICE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SERVICE_KEY:
+        print("[startup] SUPABASE_KEY not set, skipping column check")
+        return
+    # Try to SELECT the new columns — if they don't exist PostgREST returns a 400
+    # We add them by calling a stored procedure if it exists, otherwise skip gracefully
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/engine_queue?select=preview_url,email_json&limit=0"
+        req = urllib.request.Request(url, headers={
+            "apikey": SERVICE_KEY,
+            "Authorization": f"Bearer {SERVICE_KEY}",
+        })
+        urllib.request.urlopen(req)
+        print("[startup] engine_queue columns OK")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        if "does not exist" in body:
+            print("[startup] engine_queue missing columns — please run migration SQL:")
+            print("  ALTER TABLE engine_queue")
+            print("    ADD COLUMN IF NOT EXISTS preview_url text,")
+            print("    ADD COLUMN IF NOT EXISTS email_json jsonb;")
+        else:
+            print(f"[startup] column check: {e.code} {body[:200]}")
+    except Exception as e:
+        print(f"[startup] migration check skipped: {e}")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -138,6 +171,16 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         except Exception as e:
             yield sse("log", text=f"Supabase save failed: {e}", level="error")
 
+        # ── Step 6b: Write-back preview_url + email_json to engine_queue ──
+        # This lets the Engine page restore the result panel after navigation
+        try:
+            await loop.run_in_executor(
+                None,
+                lambda: update_engine_queue_result(domain, preview_url, email_data)
+            )
+        except Exception as e:
+            yield sse("log", text=f"Queue write-back skipped: {e}", level="dim")
+
         # ── Done ─────────────────────────────────────────────────────
         yield sse("result", payload={
             "preview_url": preview_url,
@@ -210,9 +253,36 @@ If you don't know something specific, say you'll have the team follow up."""
     return {"reply": response.content[0].text.strip()}
 
 
+@app.post("/migrate")
+async def migrate():
+    """Admin endpoint: add missing columns to engine_queue.
+    Requires SUPABASE_SERVICE_KEY env var with DDL privileges.
+    Since PostgREST can't run DDL, this returns the SQL to run manually."""
+    sql = (
+        "ALTER TABLE engine_queue "
+        "ADD COLUMN IF NOT EXISTS preview_url text, "
+        "ADD COLUMN IF NOT EXISTS email_json jsonb;"
+    )
+    # Check if columns already exist
+    import urllib.request, urllib.error
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
+    KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/engine_queue?select=preview_url,email_json&limit=0"
+        req = urllib.request.Request(url, headers={"apikey": KEY, "Authorization": f"Bearer {KEY}"})
+        urllib.request.urlopen(req)
+        return {"status": "columns_exist", "message": "preview_url and email_json already present"}
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        if "does not exist" in body:
+            return {"status": "migration_needed", "sql": sql,
+                    "instructions": "Run this SQL in Supabase dashboard > SQL Editor"}
+        return {"status": "error", "detail": body[:300]}
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "1.1.0"}
+    return {"status": "ok", "version": "1.2.0"}
 
 
 @app.get("/")

@@ -9,7 +9,7 @@ import urllib.request
 import urllib.error
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY", "sb_publishable_IJxpmO67xZUpIM6OdlVxKg__Yvdfl8a")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
 DEFAULT_BRAND_ID = os.environ.get("LVRG_BRAND_ID", "0be94239-82c7-440e-80ef-171033694fb5")  # LVRG default brand
 
 
@@ -82,6 +82,22 @@ def log_event(lead_id: str, event: str, metadata: dict = None):
         "event": event,
         "metadata": metadata or {},
     })
+
+
+def update_engine_queue_result(domain: str, preview_url: str, email_data: dict):
+    """Write preview_url + email_json back to engine_queue after a build.
+    Called after site is deployed so the Engine page can restore results on navigation."""
+    import urllib.parse
+    encoded_domain = urllib.parse.quote(domain, safe='')
+    body = {
+        "status": "built",
+        "preview_url": preview_url,
+        "email_json": email_data,
+    }
+    result = _request("PATCH", f"engine_queue?domain=eq.{encoded_domain}", body)
+    if result is not None:
+        print(f"  [supabase] ✓ engine_queue write-back: {domain}")
+    return result
 
 
 def update_lead_status(domain: str, status: str, extra: dict = None):
