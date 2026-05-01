@@ -39,39 +39,54 @@ PROSPECT INTEL:
 
 BUILD a complete single-file HTML homepage (index.html). Requirements:
 
-DESIGN:
-- All CSS inline in <style> tags — no external CSS files
-- Google Fonts only (via @import in style) 
-- Use the brand vibe and primary color to guide the design
-- Must look like a $5,000 professionally designed website
-- Modern, beautiful, conversion-optimized
+CRITICAL STRUCTURE RULE:
+Write the HTML in this exact order — DO NOT write a large <style> block first.
+Instead use a SHORT <style> block (max 80 lines) for variables and resets only,
+then write ALL HTML immediately, using style attributes for component-specific styling.
+This ensures the HTML body is never cut off.
 
-LAYOUT (in order):
-1. LVRG CLAIM BAR: Sticky top bar — black background, subtle. Text: "This site was built for [Business Name] by LVRG Agency." Right side: gold "Claim This Site →" button linking to {BOOKING_URL}
-2. NAV: Logo (text), nav links, primary CTA button
-3. HERO: Bold 5-8 word headline, subheadline, 2 CTAs, visual element (CSS gradient/geometric — NO external img URLs)
-4. SOCIAL PROOF BAR: 3 key stats from their intel
+STRUCTURE:
+```
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>...</title>
+  <link href="https://fonts.googleapis.com/..." rel="stylesheet">
+  <style>
+    /* ONLY: CSS reset, :root variables, body font. MAX 40 lines. */
+    * {{ margin:0; padding:0; box-sizing:border-box; }}
+    :root {{ --primary: {intel.get('primary_color','#333')}; --accent: #c9a45c; }}
+    body {{ font-family: 'Montserrat', sans-serif; background: #fafafa; color: #222; }}
+  </style>
+</head>
+<body>
+  <!-- ALL SECTIONS WITH INLINE STYLES -->
+</body>
+</html>
+```
+
+SECTIONS (all with inline style= attributes):
+1. CLAIM BAR: sticky top, black bg. "This site was built for [Business] by LVRG Agency" + gold "Claim This Site →" button → {BOOKING_URL}
+2. NAV: logo text + 3 nav links + CTA button  
+3. HERO: bold headline (5-8 words), subheadline, 2 CTA buttons, CSS gradient background
+4. SOCIAL PROOF: 3 stats in a row
 5. SERVICES: 3 cards
-6. TESTIMONIALS: 2-3 pull quotes (write compelling ones based on their business type and social proof)
-7. CTA BANNER: "Ask us anything" above the chat widget area
-8. FOOTER: Contact info, hours, copyright "LVRG Agency"
+6. TESTIMONIALS: 2 quotes
+7. CTA BANNER + chat widget area
+8. FOOTER: contact, hours, © LVRG Agency
 
-CHAT WIDGET (bottom-right, fixed):
-- Circular button with chat icon
-- Opens a 300x420px panel on click
-- Header: business name + "AI Assistant" + avatar (CSS circle with initial)
-- Pre-populated opening message specific to their business and main offering
-- Input field + send button
-- Style in brand colors
-- Make it feel real and premium
+CHAT WIDGET (fixed bottom-right, inline styles):
+- Button → opens 300x420 panel
+- Opening message specific to their business
+- Input + send button
 
 COPY:
-- Write ALL copy fresh — do not copy their existing site verbatim
-- Headline: punchy, benefit-driven, 5-8 words
-- Every CTA drives toward their main conversion goal
-- Mention their city/neighborhood naturally
+- Fresh copy, not copied from their site
+- Punchy benefit-driven headline
+- Reference their city naturally
 
-OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code blocks. Just raw HTML starting with <!DOCTYPE html>"""
+OUTPUT: Return ONLY complete HTML. No markdown. Start with <!DOCTYPE html>"""
 
     client = _get_client()
     response = client.messages.create(
