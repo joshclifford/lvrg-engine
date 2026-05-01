@@ -63,6 +63,12 @@ def upsert_lead(
         "instantly_lead_id": instantly_lead_id,
         "instantly_campaign_id": instantly_campaign_id,
         "brand_id": DEFAULT_BRAND_ID,
+        # Structured fields for Instantly custom variables
+        "owner_name": intel.get("owner_name") or "",
+        "neighborhood": intel.get("neighborhood") or "",
+        "business_type": intel.get("business_type") or "",
+        "pain_point": intel.get("pain_point") or "",
+        "hook": email_data.get("hook") or ("new_site" if (grade.get("total") or 5) <= 5 else "live_chat"),
     }
 
     # Upsert on domain (update if exists, insert if not)

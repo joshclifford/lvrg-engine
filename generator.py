@@ -235,6 +235,15 @@ OUTPUT FORMAT (JSON only, no markdown):
     
     email_data["preview_url"] = preview_url
     email_data["prospect_id"] = prospect_id
+
+    # Structured fields for Instantly custom variables
+    email_data["business_name"] = intel.get("business_name", "")
+    email_data["owner_name"] = intel.get("owner_name", "")
+    email_data["neighborhood"] = intel.get("neighborhood", "")
+    email_data["business_type"] = intel.get("business_type", "")
+    email_data["pain_point"] = intel.get("pain_point", "")
+    email_data["grade"] = grade.get("total", 0)
+    email_data["hook"] = "new_site" if grade.get("total", 5) <= 5 else "live_chat"
     
     # Save
     os.makedirs(EMAILS_DIR, exist_ok=True)

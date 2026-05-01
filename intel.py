@@ -68,6 +68,8 @@ Extract and return a JSON object with these fields:
 - pain_point: The single biggest conversion problem with their current site in one sentence (string)
 - chat_persona: How an AI chat agent should behave for this business in one sentence (string)
 - cta_angle: The best CTA angle for this business - what they most want customers to do (string, e.g. "Book a Private Event", "Get a Free Quote", "Reserve a Table")
+- owner_name: Owner or decision maker first name if mentioned anywhere on the site (string, empty if not found)
+- neighborhood: Specific San Diego neighborhood or area, parsed from the location field (string, e.g. "North Park", "Little Italy", "Gaslamp", empty if unknown)
 
 Return ONLY valid JSON, no markdown, no explanation."""
 
@@ -131,6 +133,8 @@ def scrape_site(domain: str) -> dict:
         "pain_point": extracted.get("pain_point", "Visitors can't easily take action on the site"),
         "chat_persona": extracted.get("chat_persona", "Friendly assistant that answers questions and helps customers"),
         "cta_angle": extracted.get("cta_angle", "Get in Touch"),
+        "owner_name": extracted.get("owner_name", ""),
+        "neighborhood": extracted.get("neighborhood", ""),
         "raw_text": raw_text[:1000],
     }
     
