@@ -6,6 +6,7 @@ Uses Claude to generate personalized HTML site and outreach email.
 import anthropic
 import os
 import json
+from datetime import datetime
 from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
@@ -119,7 +120,7 @@ SECTIONS (all using inline style= attributes):
 5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
 6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
 7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
-8. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
+8. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © {datetime.now().year} There San Diego. All rights reserved. | Preview site for {intel['business_name']}
 
 COPY RULES:
 - Use their REAL business details, real services, real social proof
