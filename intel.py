@@ -20,6 +20,41 @@ HEADERS = {
 }
 
 
+def fetch_screenshot(domain: str) -> str | None:
+    """Fetch a full-page screenshot via Firecrawl. Returns base64 PNG string or None."""
+    api_key = os.environ.get("FIRECRAWL_API_KEY", "")
+    if not api_key:
+        print("  [intel] No FIRECRAWL_API_KEY — skipping screenshot")
+        return None
+    url = f"https://{domain}" if not domain.startswith("http") else domain
+    try:
+        resp = requests.post(
+            "https://api.firecrawl.dev/v1/scrape",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"url": url, "formats": ["screenshot@fullPage"], "waitFor": 1500},
+            timeout=30
+        )
+        data = resp.json()
+        # Firecrawl returns a URL or base64 string under data.screenshot
+        screenshot = (data.get("data") or {}).get("screenshot")
+        if not screenshot:
+            print(f"  [intel] Screenshot not returned for {domain}")
+            return None
+        # If it's a URL, fetch and convert to base64
+        if screenshot.startswith("http"):
+            img_resp = requests.get(screenshot, timeout=15)
+            import base64
+            screenshot = base64.b64encode(img_resp.content).decode("utf-8")
+        # Strip data URI prefix if present
+        if "," in screenshot and screenshot.startswith("data:"):
+            screenshot = screenshot.split(",", 1)[1]
+        print(f"  [intel] ✓ Screenshot captured for {domain} ({len(screenshot)//1024}KB)")
+        return screenshot
+    except Exception as e:
+        print(f"  [intel] Screenshot failed: {e}")
+        return None
+
+
 def fetch_site_content(domain: str) -> str:
     """Fetch raw HTML/text from a site."""
     url = f"https://{domain}" if not domain.startswith("http") else domain
@@ -104,6 +139,7 @@ def scrape_site(domain: str) -> dict:
     print(f"  [intel] Fetching {url}...")
     
     raw_text = fetch_site_content(domain)
+    screenshot_b64 = fetch_screenshot(domain)
     
     if raw_text:
         print(f"  [intel] Extracting structured intel with Claude...")
@@ -136,6 +172,7 @@ def scrape_site(domain: str) -> dict:
         "owner_name": extracted.get("owner_name", ""),
         "neighborhood": extracted.get("neighborhood", ""),
         "raw_text": raw_text[:1000],
+        "screenshot_b64": screenshot_b64,  # base64 PNG of existing site, used by Kimi vision
     }
     
     print(f"  [intel] ✓ {intel['business_name']} — {intel['business_type']} — {intel['location']}")

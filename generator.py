@@ -1,15 +1,80 @@
 """
 LVRG Lead Magnet Engine — Site + Email Generator
-Uses Claude to generate personalized HTML site and outreach email.
+Site generation: routes to Kimi or Claude based on SITE_MODEL env var.
+Email generation: always uses Claude.
+
+To switch models set the SITE_MODEL environment variable:
+  SITE_MODEL=kimi    → Kimi K2.6 via Moonshot AI (default)
+  SITE_MODEL=claude  → Claude Opus 4.5 (fallback)
 """
 
 import anthropic
 import os
 import json
+from openai import OpenAI
 from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
 
+# ── Model routing ────────────────────────────────────────────────────────────
+SITE_MODEL = os.environ.get("SITE_MODEL", "kimi").lower()  # "kimi" | "claude"
+
+def _get_claude_client():
+    key = os.environ.get("ANTHROPIC_API_KEY") or ""
+    return anthropic.Anthropic(api_key=key)
+
+def _get_kimi_client():
+    key = os.environ.get("KIMI_API_KEY") or ""
+    return OpenAI(api_key=key, base_url="https://api.moonshot.ai/v1")
+
+def _call_site_model(prompt: str, screenshot_b64: str | None = None) -> str:
+    """Call whichever model is active for site generation. Returns raw HTML string.
+    
+    When screenshot_b64 is provided and model=kimi, the existing site screenshot
+    is passed as a vision input so Kimi can reference the real design.
+    """
+    model = os.environ.get("SITE_MODEL", "kimi").lower()
+    print(f"  [generator] Using site model: {model}")
+
+    if model == "claude":
+        client = _get_claude_client()
+        response = client.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=12000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text.strip()
+    else:
+        # Default: Kimi K2.6 — with optional vision input
+        client = _get_kimi_client()
+        
+        if screenshot_b64:
+            print(f"  [generator] Attaching screenshot ({len(screenshot_b64)//1024}KB) for vision-grounded generation")
+            messages = [{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{screenshot_b64}"}
+                    },
+                    {
+                        "type": "text",
+                        "text": "This is a screenshot of the prospect's CURRENT website. Study it carefully — note the layout, colors, fonts, content structure, and any weaknesses (poor design, missing CTAs, low visual quality).\n\nNow build a dramatically better version based on the instructions below. Use what you learned from the screenshot to make your redesign feel like a genuine upgrade of THEIR brand — not a generic template.\n\n" + prompt
+                    }
+                ]
+            }]
+        else:
+            print(f"  [generator] No screenshot available — text-only generation")
+            messages = [{"role": "user", "content": prompt}]
+        
+        response = client.chat.completions.create(
+            model="kimi-k2.6",
+            max_tokens=12000,
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
+
+# Keep old _get_client for email generation (always Claude)
 def _get_client():
     key = os.environ.get("ANTHROPIC_API_KEY") or ""
     return anthropic.Anthropic(api_key=key)
@@ -111,7 +176,7 @@ CHAT WIDGET — copy this EXACTLY at end of body, before </body>:
   </div>
 </div>
 <script>
-const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k != 'raw_text'}, ensure_ascii=False)};
+const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k not in ('raw_text', 'screenshot_b64')}, ensure_ascii=False)};
 const _lvrgHistory = [];
 const _lvrgEndpoint = 'https://lvrg-engine-production.up.railway.app/chat';
 function lvrgToggle(){{const p=document.getElementById('lvrg-panel');p.style.display=p.style.display==='none'?'flex':'none';}}
@@ -121,14 +186,7 @@ async function lvrgSend(){{const inp=document.getElementById('lvrg-input');const
 
 OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. Start with <!DOCTYPE html>"""
 
-    client = _get_client()
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=12000,
-        messages=[{"role": "user", "content": site_prompt}]
-    )
-    
-    html = response.content[0].text.strip()
+    html = _call_site_model(site_prompt, screenshot_b64=intel.get("screenshot_b64"))
     
     # Strip markdown code blocks if Claude wrapped it
     if html.startswith("```"):
