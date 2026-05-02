@@ -118,7 +118,8 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         from slugify import slugify
         prospect_id = slugify(domain.split(".")[0]) or slugify(domain.replace(".", "-"))
 
-        yield sse("log", text="Generating Smart Site with Claude...", level="info")
+        site_model = os.environ.get("SITE_MODEL", "kimi").upper()
+        yield sse("log", text=f"Generating Smart Site with {site_model}...", level="info")
         if notes:
             yield sse("log", text=f"Notes: {notes}", level="info")
         site_dir = await loop.run_in_executor(None, generate_site, intel, prospect_id, notes)
