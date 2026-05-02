@@ -1,109 +1,15 @@
 """
 LVRG Lead Magnet Engine — Site + Email Generator
-Site generation: routes to Kimi or Claude based on SITE_MODEL env var.
-Email generation: always uses Claude.
-
-To switch models set the SITE_MODEL environment variable:
-  SITE_MODEL=kimi    → Kimi K2.6 via Moonshot AI (default)
-  SITE_MODEL=claude  → Claude Opus 4.5 (fallback)
+Uses Claude to generate personalized HTML site and outreach email.
 """
 
 import anthropic
 import os
 import json
-from openai import OpenAI
 from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
 
-# ── Model routing ────────────────────────────────────────────────────────────
-SITE_MODEL = os.environ.get("SITE_MODEL", "kimi").lower()  # "kimi" | "claude"
-
-def _get_claude_client():
-    key = os.environ.get("ANTHROPIC_API_KEY") or ""
-    return anthropic.Anthropic(api_key=key)
-
-def _get_kimi_client():
-    key = os.environ.get("KIMI_API_KEY") or ""
-    return OpenAI(api_key=key, base_url="https://api.moonshot.ai/v1")
-
-def _compress_screenshot(screenshot_b64: str, max_width: int = 1280, quality: int = 72) -> str:
-    """Resize + re-encode screenshot as JPEG to reduce payload size.
-    Input: base64 PNG string. Output: base64 JPEG string (much smaller).
-    Falls back to original if Pillow not available."""
-    try:
-        from PIL import Image
-        import io, base64
-        img_bytes = base64.b64decode(screenshot_b64)
-        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        # Resize to max_width keeping aspect ratio
-        w, h = img.size
-        if w > max_width:
-            img = img.resize((max_width, int(h * max_width / w)), Image.LANCZOS)
-        # Re-encode as JPEG
-        buf = io.BytesIO()
-        img.save(buf, format="JPEG", quality=quality, optimize=True)
-        compressed = base64.b64encode(buf.getvalue()).decode("utf-8")
-        orig_kb = len(screenshot_b64) // 1024
-        comp_kb = len(compressed) // 1024
-        print(f"  [generator] Screenshot compressed: {orig_kb}KB → {comp_kb}KB")
-        return compressed
-    except Exception as e:
-        print(f"  [generator] Compression failed ({e}), using original")
-        return screenshot_b64
-
-
-def _call_site_model(prompt: str, screenshot_b64: str | None = None) -> str:
-    """Call whichever model is active for site generation. Returns raw HTML string.
-    
-    When screenshot_b64 is provided and model=kimi, the existing site screenshot
-    is passed as a vision input so Kimi can reference the real design.
-    """
-    model = os.environ.get("SITE_MODEL", "kimi").lower()
-    print(f"  [generator] Using site model: {model}")
-
-    if model == "claude":
-        client = _get_claude_client()
-        response = client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=12000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.content[0].text.strip()
-    else:
-        # Default: Kimi K2.6 — with optional vision input
-        client = _get_kimi_client()
-        
-        if screenshot_b64:
-            # Compress before sending — full-page PNGs can be 3MB+, Kimi times out
-            compressed = _compress_screenshot(screenshot_b64)
-            print(f"  [generator] Attaching screenshot ({len(compressed)//1024}KB) for vision-grounded generation")
-            messages = [{
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{compressed}"}
-                    },
-                    {
-                        "type": "text",
-                        "text": "This is a screenshot of the prospect's CURRENT website. Study it carefully — note the layout, colors, fonts, content structure, and any weaknesses (poor design, missing CTAs, low visual quality).\n\nNow build a dramatically better version based on the instructions below. Use what you learned from the screenshot to make your redesign feel like a genuine upgrade of THEIR brand — not a generic template.\n\n" + prompt
-                    }
-                ]
-            }]
-        else:
-            print(f"  [generator] No screenshot available — text-only generation")
-            messages = [{"role": "user", "content": prompt}]
-        
-        response = client.chat.completions.create(
-            model="kimi-k2.6",
-            max_tokens=12000,
-            messages=messages,
-            timeout=150,  # 2.5 min hard cap — Kimi can be slow but shouldn't hang forever
-        )
-        return response.choices[0].message.content.strip()
-
-# Keep old _get_client for email generation (always Claude)
 def _get_client():
     key = os.environ.get("ANTHROPIC_API_KEY") or ""
     return anthropic.Anthropic(api_key=key)
@@ -115,41 +21,7 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     print(f"  [generator] Generating site for {intel['business_name']}...")
     
     notes_block = f"\n\nSPECIAL INSTRUCTIONS FROM CLIENT:\n{notes}\n" if notes else ""
-
-    # ── Build Yelp context block ──────────────────────────────────────────────
-    yelp_reviews = intel.get("yelp_reviews") or []
-    yelp_photos = intel.get("yelp_photo_urls") or []
-    yelp_rating = intel.get("yelp_rating")
-    yelp_review_count = intel.get("yelp_review_count")
-
-    # Format reviews for the prompt
-    if yelp_reviews:
-        reviews_text = "\n".join(
-            f'  - {r.get("author","Guest")} ({r.get("rating",5)}★): "{r.get("text","")}"'
-            for r in yelp_reviews[:5]
-        )
-    else:
-        reviews_text = "  (none available — write 2-3 compelling testimonials grounded in the business type)"
-
-    # Only pass photos we actually have — quality-filter by keeping max 6, skip empties
-    good_photos = [p for p in yelp_photos if p and p.startswith("http")][:6]
-    if good_photos:
-        photos_text = "\n".join(f"  {p}" for p in good_photos)
-        photos_instruction = (
-            f"USE THESE REAL PHOTOS from Yelp as <img src=\"...\"> tags in the site (hero bg, gallery, or menu sections). "
-            f"Only use them if they look like food/venue photos. DO NOT use placeholder image URLs. "
-            f"If you include images, use object-fit:cover and good aspect ratios.\n"
-            f"REAL PHOTO URLS:\n{photos_text}"
-        )
-    else:
-        photos_instruction = "No real photos available — use CSS gradients and background colors instead. DO NOT use placeholder image URLs."
-
-    yelp_social_proof = ""
-    if yelp_rating and yelp_review_count:
-        yelp_social_proof = f"{yelp_rating}★ on Yelp ({yelp_review_count:,} reviews)"
-    elif yelp_rating:
-        yelp_social_proof = f"{yelp_rating}★ on Yelp"
-
+    
     site_prompt = f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
 
 PROSPECT INTEL:
@@ -160,19 +32,12 @@ PROSPECT INTEL:
 - Location: {intel['location']}
 - Phone: {intel.get('phone', 'Not listed')}
 - Hours: {intel.get('hours', 'Not listed')}
-- Social proof: {intel.get('social_proof', 'Not listed')}{(' | ' + yelp_social_proof) if yelp_social_proof else ''}
-- Yelp rating: {yelp_rating or 'N/A'} ({yelp_review_count or '?'} reviews)
+- Social proof: {intel.get('social_proof', 'Not listed')}
 - Brand vibe: {intel.get('brand_vibe', 'clean, modern')}
 - Primary color: {intel.get('primary_color', '#333')}
 - Business type: {intel.get('business_type', 'other')}
 - What's missing on their site: {intel.get('missing', 'chat, CTA, contact info')}
 - Raw site content: {intel.get('raw_text', '')[:2000]}
-
-REAL YELP REVIEWS (use these as testimonials — do NOT make up fake reviews):
-{reviews_text}
-
-PHOTOS:
-{photos_instruction}
 
 BUILD a complete single-file HTML homepage (index.html).
 
@@ -211,9 +76,9 @@ SECTIONS (all using inline style= attributes):
 1. CLAIM BAR: sticky top bar, black background. Left side: "There San Diego Smart Sites · Created by LVRG AI" in small gray text. Right side: gold "Claim This Site →" button → {BOOKING_URL}. Do NOT mention the business name in the claim bar.
 2. NAV: business name as logo, 3 nav links, primary CTA button
 3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs, CSS gradient background using brand colors
-4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}{(' | ' + yelp_social_proof) if yelp_social_proof else ''}
+4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}
 5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
-6. TESTIMONIALS: Use the REAL Yelp reviews provided above verbatim (shortened if needed). If no Yelp reviews, write 2-3 believable testimonials grounded in the business type. Never fabricate reviews if real ones were provided.
+6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
 7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
 8. CHAT WIDGET: See exact implementation below — copy this verbatim at the end of <body>.
 9. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
@@ -246,7 +111,7 @@ CHAT WIDGET — copy this EXACTLY at end of body, before </body>:
   </div>
 </div>
 <script>
-const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k not in ('raw_text', 'screenshot_b64', 'yelp_photo_urls', 'yelp_reviews')}, ensure_ascii=False)};
+const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k != 'raw_text'}, ensure_ascii=False)};
 const _lvrgHistory = [];
 const _lvrgEndpoint = 'https://lvrg-engine-production.up.railway.app/chat';
 function lvrgToggle(){{const p=document.getElementById('lvrg-panel');p.style.display=p.style.display==='none'?'flex':'none';}}
@@ -256,7 +121,14 @@ async function lvrgSend(){{const inp=document.getElementById('lvrg-input');const
 
 OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. Start with <!DOCTYPE html>"""
 
-    html = _call_site_model(site_prompt, screenshot_b64=intel.get("screenshot_b64"))
+    client = _get_client()
+    response = client.messages.create(
+        model="claude-opus-4-5",
+        max_tokens=12000,
+        messages=[{"role": "user", "content": site_prompt}]
+    )
+    
+    html = response.content[0].text.strip()
     
     # Strip markdown code blocks if Claude wrapped it
     if html.startswith("```"):
