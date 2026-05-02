@@ -112,7 +112,7 @@ DESIGN:
 - NO external image URLs — use CSS gradients and background colors for visual sections
 
 SECTIONS (all using inline style= attributes):
-1. CLAIM BAR: sticky top bar, black background. Left side: "There San Diego Smart Sites · Created by LVRG AI" in small gray text. Right side: gold "Claim This Site →" button → {BOOKING_URL}. Do NOT mention the business name in the claim bar.
+1. CLAIM BAR: sticky top bar, black background. Centered single line: "This site was built for **{intel['business_name']}** by LVRG Agency" (business name in bold white, rest in normal gray/white text), then immediately a gold "Claim This Site →" pill button linking to {BOOKING_URL}. All on one centered line. No left/right split.
 2. NAV: business name as logo, 3 nav links, primary CTA button
 3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs, CSS gradient background using brand colors
 4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}
