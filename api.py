@@ -99,9 +99,25 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         logs.append(line)
 
     try:
+        # ── Step 0: Fetch queue contact data (Scout may have found email/phone) ──
+        queue_contact = {}
+        try:
+            import urllib.request as _ur, urllib.parse as _up
+            _key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+            _url = f"https://fwcdiqfsjtwtlmekjqir.supabase.co/rest/v1/engine_queue?select=email,phone&domain=eq.{_up.quote(domain, safe='')}&limit=1"
+            _req = _ur.Request(_url, headers={"apikey": _key, "Authorization": f"Bearer {_key}"})
+            with _ur.urlopen(_req) as _res:
+                _rows = __import__('json').loads(_res.read().decode())
+                if _rows: queue_contact = _rows[0]
+        except Exception:
+            pass
+
         # ── Step 1: Intel ────────────────────────────────────────────
         yield sse("log", text=f"Reading {domain}...", level="info")
         intel = await loop.run_in_executor(None, scrape_site, domain)
+        # Prefer Scout-found email/phone over scraped (Scout finds real contact emails)
+        if queue_contact.get("email"): intel["email"] = queue_contact["email"]
+        if queue_contact.get("phone"): intel["phone"] = queue_contact["phone"]
         yield sse("log", text=f"Got intel for {intel['business_name']}", level="success")
         yield sse("intel", data=intel)
 

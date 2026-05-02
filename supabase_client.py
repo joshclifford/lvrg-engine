@@ -53,7 +53,7 @@ def upsert_lead(
         "domain": domain,
         "company_name": intel.get("business_name"),
         "email": intel.get("email"),
-        "first_name": intel.get("owner_name") or "there",
+        "first_name": intel.get("owner_name") or "",
         "phone": intel.get("phone"),
         "offer": offer,
         "cta": cta,
