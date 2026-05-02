@@ -154,12 +154,9 @@ OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. 
     # This avoids Claude placing it inside overflow:hidden sections
     widget_html = _build_chat_widget(intel)
     if '</body>' in html:
-        html = html.replace('</body>', widget_html + '
-</body>', 1)
+        html = html.replace('</body>', widget_html + '\n</body>', 1)
     else:
-        html += widget_html + '
-</body>
-</html>'
+        html += widget_html + '\n</body>\n</html>'
 
     # Save site
     os.makedirs(SITES_DIR, exist_ok=True)
