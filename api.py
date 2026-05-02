@@ -83,19 +83,20 @@ def sse(type: str, **kwargs) -> str:
     return f"data: {json.dumps({'type': type, **kwargs})}\n\n"
 
 
-async def run_with_heartbeat(loop, fn, *args, interval: int = 10):
-    """Run a blocking function in executor while yielding SSE heartbeat pings.
-    Returns (result, ping_lines) where ping_lines is a list of SSE strings to yield."""
+async def run_with_heartbeat(loop, fn, *args, interval: int = 8):
+    """Run a blocking function in executor, yielding SSE ping events in real time.
+    Usage: async for chunk in run_with_heartbeat(loop, fn, *args): yield chunk
+    The last item yielded is a special sentinel dict — not an SSE string."""
     task = loop.run_in_executor(None, fn, *args)
-    pings = []
+    ping = f"data: {json.dumps({'type': 'ping'})}\n\n"
     while not task.done():
         try:
             await asyncio.wait_for(asyncio.shield(task), timeout=interval)
-            break
+            break  # task finished within interval
         except asyncio.TimeoutError:
-            pings.append(f"data: {json.dumps({'type': 'ping'})}\n\n")
+            yield ping  # real-time ping — keeps Railway/browser connection alive
     result = await task
-    return result, pings
+    yield result  # final item is the actual return value (not SSE)
 
 
 async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes: str = "") -> AsyncGenerator[str, None]:
@@ -116,7 +117,12 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
     try:
         # ── Step 1: Intel ────────────────────────────────────────────
         yield sse("log", text=f"Reading {domain}...", level="info")
-        intel = await loop.run_in_executor(None, scrape_site, domain)
+        intel = None
+        async for chunk in run_with_heartbeat(loop, scrape_site, domain):
+            if isinstance(chunk, str):
+                yield chunk
+            else:
+                intel = chunk
         yield sse("log", text=f"Got intel for {intel['business_name']}", level="success")
         yield sse("intel", data=intel)
 
@@ -137,8 +143,12 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         yield sse("log", text=f"Generating Smart Site with {site_model}...", level="info")
         if notes:
             yield sse("log", text=f"Notes: {notes}", level="info")
-        site_dir, pings = await run_with_heartbeat(loop, generate_site, intel, prospect_id, notes)
-        for p in pings: yield p
+        site_dir = None
+        async for chunk in run_with_heartbeat(loop, generate_site, intel, prospect_id, notes):
+            if isinstance(chunk, str):
+                yield chunk  # SSE ping
+            else:
+                site_dir = chunk  # final result
         yield sse("log", text="Site generated", level="success")
 
         # ── Step 4: Deploy ───────────────────────────────────────────
@@ -146,8 +156,12 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         if not no_deploy:
             yield sse("log", text="Deploying to GitHub Pages...", level="info")
             try:
-                preview_url, pings = await run_with_heartbeat(loop, deploy_site, prospect_id, site_dir)
-                for p in pings: yield p
+                preview_url = None
+                async for chunk in run_with_heartbeat(loop, deploy_site, prospect_id, site_dir):
+                    if isinstance(chunk, str):
+                        yield chunk  # SSE ping
+                    else:
+                        preview_url = chunk  # final result
                 yield sse("log", text=f"Live at {preview_url}", level="success")
             except Exception as e:
                 yield sse("log", text=f"Deploy failed: {e} — continuing", level="error")
