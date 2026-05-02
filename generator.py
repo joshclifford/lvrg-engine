@@ -27,6 +27,32 @@ def _get_kimi_client():
     key = os.environ.get("KIMI_API_KEY") or ""
     return OpenAI(api_key=key, base_url="https://api.moonshot.ai/v1")
 
+def _compress_screenshot(screenshot_b64: str, max_width: int = 1280, quality: int = 72) -> str:
+    """Resize + re-encode screenshot as JPEG to reduce payload size.
+    Input: base64 PNG string. Output: base64 JPEG string (much smaller).
+    Falls back to original if Pillow not available."""
+    try:
+        from PIL import Image
+        import io, base64
+        img_bytes = base64.b64decode(screenshot_b64)
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        # Resize to max_width keeping aspect ratio
+        w, h = img.size
+        if w > max_width:
+            img = img.resize((max_width, int(h * max_width / w)), Image.LANCZOS)
+        # Re-encode as JPEG
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=quality, optimize=True)
+        compressed = base64.b64encode(buf.getvalue()).decode("utf-8")
+        orig_kb = len(screenshot_b64) // 1024
+        comp_kb = len(compressed) // 1024
+        print(f"  [generator] Screenshot compressed: {orig_kb}KB → {comp_kb}KB")
+        return compressed
+    except Exception as e:
+        print(f"  [generator] Compression failed ({e}), using original")
+        return screenshot_b64
+
+
 def _call_site_model(prompt: str, screenshot_b64: str | None = None) -> str:
     """Call whichever model is active for site generation. Returns raw HTML string.
     
@@ -49,13 +75,15 @@ def _call_site_model(prompt: str, screenshot_b64: str | None = None) -> str:
         client = _get_kimi_client()
         
         if screenshot_b64:
-            print(f"  [generator] Attaching screenshot ({len(screenshot_b64)//1024}KB) for vision-grounded generation")
+            # Compress before sending — full-page PNGs can be 3MB+, Kimi times out
+            compressed = _compress_screenshot(screenshot_b64)
+            print(f"  [generator] Attaching screenshot ({len(compressed)//1024}KB) for vision-grounded generation")
             messages = [{
                 "role": "user",
                 "content": [
                     {
                         "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{screenshot_b64}"}
+                        "image_url": {"url": f"data:image/jpeg;base64,{compressed}"}
                     },
                     {
                         "type": "text",
@@ -70,7 +98,8 @@ def _call_site_model(prompt: str, screenshot_b64: str | None = None) -> str:
         response = client.chat.completions.create(
             model="kimi-k2.6",
             max_tokens=12000,
-            messages=messages
+            messages=messages,
+            timeout=150,  # 2.5 min hard cap — Kimi can be slow but shouldn't hang forever
         )
         return response.choices[0].message.content.strip()
 
