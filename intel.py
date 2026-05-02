@@ -239,10 +239,8 @@ def scrape_site(domain: str) -> dict:
     else:
         extracted = {}
 
-    # Yelp enrichment — fetch after we know the business name
-    business_name_for_yelp = extracted.get("business_name") or domain.split(".")[0].replace("-", " ").title()
-    print(f"  [intel] Fetching Yelp data for {business_name_for_yelp}...")
-    yelp = fetch_yelp_intel(business_name_for_yelp, domain)
+    # Yelp enrichment — disabled temporarily
+    yelp = {}
     
     # Build final intel object with fallbacks
     intel = {
