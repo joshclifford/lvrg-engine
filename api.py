@@ -83,6 +83,21 @@ def sse(type: str, **kwargs) -> str:
     return f"data: {json.dumps({'type': type, **kwargs})}\n\n"
 
 
+async def run_with_heartbeat(loop, fn, *args, interval: int = 10):
+    """Run a blocking function in executor while yielding SSE heartbeat pings.
+    Returns (result, ping_lines) where ping_lines is a list of SSE strings to yield."""
+    task = loop.run_in_executor(None, fn, *args)
+    pings = []
+    while not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), timeout=interval)
+            break
+        except asyncio.TimeoutError:
+            pings.append(f"data: {json.dumps({'type': 'ping'})}\n\n")
+    result = await task
+    return result, pings
+
+
 async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes: str = "") -> AsyncGenerator[str, None]:
     """Run the full engine pipeline, yielding SSE events."""
 
@@ -122,7 +137,8 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         yield sse("log", text=f"Generating Smart Site with {site_model}...", level="info")
         if notes:
             yield sse("log", text=f"Notes: {notes}", level="info")
-        site_dir = await loop.run_in_executor(None, generate_site, intel, prospect_id, notes)
+        site_dir, pings = await run_with_heartbeat(loop, generate_site, intel, prospect_id, notes)
+        for p in pings: yield p
         yield sse("log", text="Site generated", level="success")
 
         # ── Step 4: Deploy ───────────────────────────────────────────
@@ -130,7 +146,8 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         if not no_deploy:
             yield sse("log", text="Deploying to GitHub Pages...", level="info")
             try:
-                preview_url = await loop.run_in_executor(None, deploy_site, prospect_id, site_dir)
+                preview_url, pings = await run_with_heartbeat(loop, deploy_site, prospect_id, site_dir)
+                for p in pings: yield p
                 yield sse("log", text=f"Live at {preview_url}", level="success")
             except Exception as e:
                 yield sse("log", text=f"Deploy failed: {e} — continuing", level="error")

@@ -86,7 +86,41 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     print(f"  [generator] Generating site for {intel['business_name']}...")
     
     notes_block = f"\n\nSPECIAL INSTRUCTIONS FROM CLIENT:\n{notes}\n" if notes else ""
-    
+
+    # ── Build Yelp context block ──────────────────────────────────────────────
+    yelp_reviews = intel.get("yelp_reviews") or []
+    yelp_photos = intel.get("yelp_photo_urls") or []
+    yelp_rating = intel.get("yelp_rating")
+    yelp_review_count = intel.get("yelp_review_count")
+
+    # Format reviews for the prompt
+    if yelp_reviews:
+        reviews_text = "\n".join(
+            f'  - {r.get("author","Guest")} ({r.get("rating",5)}★): "{r.get("text","")}"'
+            for r in yelp_reviews[:5]
+        )
+    else:
+        reviews_text = "  (none available — write 2-3 compelling testimonials grounded in the business type)"
+
+    # Only pass photos we actually have — quality-filter by keeping max 6, skip empties
+    good_photos = [p for p in yelp_photos if p and p.startswith("http")][:6]
+    if good_photos:
+        photos_text = "\n".join(f"  {p}" for p in good_photos)
+        photos_instruction = (
+            f"USE THESE REAL PHOTOS from Yelp as <img src=\"...\"> tags in the site (hero bg, gallery, or menu sections). "
+            f"Only use them if they look like food/venue photos. DO NOT use placeholder image URLs. "
+            f"If you include images, use object-fit:cover and good aspect ratios.\n"
+            f"REAL PHOTO URLS:\n{photos_text}"
+        )
+    else:
+        photos_instruction = "No real photos available — use CSS gradients and background colors instead. DO NOT use placeholder image URLs."
+
+    yelp_social_proof = ""
+    if yelp_rating and yelp_review_count:
+        yelp_social_proof = f"{yelp_rating}★ on Yelp ({yelp_review_count:,} reviews)"
+    elif yelp_rating:
+        yelp_social_proof = f"{yelp_rating}★ on Yelp"
+
     site_prompt = f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
 
 PROSPECT INTEL:
@@ -97,12 +131,19 @@ PROSPECT INTEL:
 - Location: {intel['location']}
 - Phone: {intel.get('phone', 'Not listed')}
 - Hours: {intel.get('hours', 'Not listed')}
-- Social proof: {intel.get('social_proof', 'Not listed')}
+- Social proof: {intel.get('social_proof', 'Not listed')}{(' | ' + yelp_social_proof) if yelp_social_proof else ''}
+- Yelp rating: {yelp_rating or 'N/A'} ({yelp_review_count or '?'} reviews)
 - Brand vibe: {intel.get('brand_vibe', 'clean, modern')}
 - Primary color: {intel.get('primary_color', '#333')}
 - Business type: {intel.get('business_type', 'other')}
 - What's missing on their site: {intel.get('missing', 'chat, CTA, contact info')}
 - Raw site content: {intel.get('raw_text', '')[:2000]}
+
+REAL YELP REVIEWS (use these as testimonials — do NOT make up fake reviews):
+{reviews_text}
+
+PHOTOS:
+{photos_instruction}
 
 BUILD a complete single-file HTML homepage (index.html).
 
@@ -141,9 +182,9 @@ SECTIONS (all using inline style= attributes):
 1. CLAIM BAR: sticky top bar, black background. Left side: "There San Diego Smart Sites · Created by LVRG AI" in small gray text. Right side: gold "Claim This Site →" button → {BOOKING_URL}. Do NOT mention the business name in the claim bar.
 2. NAV: business name as logo, 3 nav links, primary CTA button
 3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs, CSS gradient background using brand colors
-4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}
+4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}{(' | ' + yelp_social_proof) if yelp_social_proof else ''}
 5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
-6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
+6. TESTIMONIALS: Use the REAL Yelp reviews provided above verbatim (shortened if needed). If no Yelp reviews, write 2-3 believable testimonials grounded in the business type. Never fabricate reviews if real ones were provided.
 7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
 8. CHAT WIDGET: See exact implementation below — copy this verbatim at the end of <body>.
 9. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
@@ -176,7 +217,7 @@ CHAT WIDGET — copy this EXACTLY at end of body, before </body>:
   </div>
 </div>
 <script>
-const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k not in ('raw_text', 'screenshot_b64')}, ensure_ascii=False)};
+const _lvrgIntel = {json.dumps({k: v for k, v in intel.items() if k not in ('raw_text', 'screenshot_b64', 'yelp_photo_urls', 'yelp_reviews')}, ensure_ascii=False)};
 const _lvrgHistory = [];
 const _lvrgEndpoint = 'https://lvrg-engine-production.up.railway.app/chat';
 function lvrgToggle(){{const p=document.getElementById('lvrg-panel');p.style.display=p.style.display==='none'?'flex':'none';}}
