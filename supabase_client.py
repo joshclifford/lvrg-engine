@@ -8,12 +8,22 @@ import json
 import urllib.request
 import urllib.error
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+SUPABASE_URL = (
+    os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or ""
+).rstrip("/")
+SUPABASE_KEY = (
+    os.environ.get("SUPABASE_KEY")
+    or os.environ.get("SUPABASE_SERVICE_KEY")
+    or os.environ.get("SUPABASE_ANON_KEY")
+    or ""
+).strip()
 DEFAULT_BRAND_ID = os.environ.get("LVRG_BRAND_ID", "0be94239-82c7-440e-80ef-171033694fb5")  # LVRG default brand
 
 
 def _request(method: str, path: str, body: dict = None) -> dict:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("  [supabase] Missing SUPABASE_URL or SUPABASE_SERVICE_KEY — skipping request")
+        return None
     url = f"{SUPABASE_URL}/rest/v1/{path}"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -91,8 +101,7 @@ def log_event(lead_id: str, event: str, metadata: dict = None):
 
 
 def update_engine_queue_result(domain: str, preview_url: str, email_data: dict):
-    """Write preview_url + email_json back to engine_queue after a build.
-    Called after site is deployed so the Engine page can restore results on navigation."""
+    """Write preview_url + email_json back to engine_queue after a build."""
     import urllib.parse
     encoded_domain = urllib.parse.quote(domain, safe='')
     body = {
