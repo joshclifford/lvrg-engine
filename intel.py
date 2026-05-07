@@ -20,25 +20,132 @@ HEADERS = {
 }
 
 
-def fetch_site_content(domain: str) -> str:
-    """Fetch raw HTML/text from a site."""
+def extract_images(html: str, base_url: str) -> list:
+    """Extract usable image URLs from raw HTML. Priority: og:image > twitter:image > img tags."""
+    import re
+    from urllib.parse import urljoin
+
+    found = []
+
+    # og:image — site owner's intentional share/hero image
+    og = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+    if not og:
+        og = re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']', html, re.IGNORECASE)
+    if og:
+        found.append(og.group(1).strip())
+
+    # twitter:image
+    tw = re.search(r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']', html, re.IGNORECASE)
+    if not tw:
+        tw = re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']twitter:image["\']', html, re.IGNORECASE)
+    if tw:
+        found.append(tw.group(1).strip())
+
+    # img tags — skip tiny icons, SVGs, tracking pixels
+    for src in re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', html, re.IGNORECASE):
+        src = src.strip()
+        if src.startswith('data:'):
+            continue
+        lower = src.lower()
+        if any(x in lower for x in ['.svg', '.ico', 'favicon', 'pixel', 'beacon', 'track', '1x1', 'blank']):
+            continue
+        found.append(src)
+        if len(found) >= 6:
+            break
+
+    # Make absolute, deduplicate, keep top 5
+    result, seen = [], set()
+    for url in found:
+        abs_url = urljoin(base_url, url)
+        if not abs_url.startswith(('http://', 'https://')):
+            continue
+        if abs_url not in seen:
+            seen.add(abs_url)
+            result.append(abs_url)
+        if len(result) >= 5:
+            break
+    return result
+
+
+def fetch_with_firecrawl(domain: str) -> tuple:
+    """Fetch site via Firecrawl (JS-rendered, clean markdown). Returns (text, images).
+    Returns ("", []) when key is absent or the call fails — caller falls back to requests."""
+    api_key = os.environ.get("FIRECRAWL_API_KEY", "").strip()
+    if not api_key:
+        return "", []
+
+    import urllib.request as _ur
+    import urllib.error as _ue
+
+    url = f"https://{domain}" if not domain.startswith("http") else domain
+    payload = json.dumps({
+        "url": url,
+        "formats": ["markdown", "html"],
+        "onlyMainContent": False,
+    }).encode()
+
+    req = _ur.Request(
+        "https://api.firecrawl.dev/v1/scrape",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with _ur.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+
+        if not data.get("success"):
+            print(f"  [intel] Firecrawl returned success=false for {domain}")
+            return "", []
+
+        result = data.get("data", {})
+        markdown = result.get("markdown", "") or ""
+        html = result.get("html", "") or ""
+        metadata = result.get("metadata", {})
+
+        # Images: og:image from Firecrawl metadata first, then regex-extract from html
+        images = []
+        og = metadata.get("ogImage", "")
+        if og and og.startswith("http"):
+            images.append(og)
+        if html:
+            for img in extract_images(html, url):
+                if img not in images:
+                    images.append(img)
+        images = images[:5]
+
+        text = markdown[:4000] if markdown else ""
+        print(f"  [intel] Firecrawl OK — {len(text)} chars, {len(images)} images")
+        return text, images
+
+    except Exception as e:
+        print(f"  [intel] Firecrawl failed: {e}")
+        return "", []
+
+
+def fetch_site_content(domain: str) -> tuple:
+    """Fetch raw HTML/text from a site. Returns (stripped_text, image_urls)."""
     url = f"https://{domain}" if not domain.startswith("http") else domain
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
-        # Strip HTML tags roughly for Claude
         import re
-        text = resp.text
-        # Remove scripts and styles
+        raw_html = resp.text
+
+        images = extract_images(raw_html, url)
+
+        text = raw_html
         text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL)
         text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
-        # Remove HTML tags
         text = re.sub(r'<[^>]+>', ' ', text)
-        # Collapse whitespace
         text = re.sub(r'\s+', ' ', text).strip()
-        return text[:4000]
+        return text[:4000], images
     except Exception as e:
         print(f"  [intel] Fetch failed: {e}")
-        return ""
+        return "", []
 
 
 def extract_intel_with_claude(domain: str, raw_text: str) -> dict:
@@ -102,9 +209,13 @@ def scrape_site(domain: str) -> dict:
     domain = domain.split("/")[0].split("?")[0].strip()
     url = f"https://{domain}"
     print(f"  [intel] Fetching {url}...")
-    
-    raw_text = fetch_site_content(domain)
-    
+
+    # Firecrawl gives JS-rendered markdown + better images; fall back to plain requests
+    raw_text, images = fetch_with_firecrawl(domain)
+    if not raw_text:
+        print(f"  [intel] Falling back to requests scraper...")
+        raw_text, images = fetch_site_content(domain)
+
     if raw_text:
         print(f"  [intel] Extracting structured intel with Claude...")
         extracted = extract_intel_with_claude(domain, raw_text)
@@ -119,7 +230,7 @@ def scrape_site(domain: str) -> dict:
         "tagline": extracted.get("tagline", ""),
         "description": extracted.get("description", f"Local business at {domain}"),
         "services": extracted.get("services", []),
-        "location": extracted.get("location", "San Diego, CA"),
+        "location": extracted.get("location", ""),
         "phone": extracted.get("phone", ""),
         "email": extracted.get("email", ""),
         "hours": extracted.get("hours", ""),
@@ -135,6 +246,7 @@ def scrape_site(domain: str) -> dict:
         "cta_angle": extracted.get("cta_angle", "Get in Touch"),
         "owner_name": extracted.get("owner_name", ""),
         "neighborhood": extracted.get("neighborhood", ""),
+        "images": images,
         "raw_text": raw_text[:1000],
     }
     
@@ -162,7 +274,7 @@ def grade_site(intel: dict) -> dict:
     contact_score = 0
     if intel.get("phone"): contact_score += 4
     if intel.get("email"): contact_score += 3
-    if intel.get("location") and intel["location"] != "San Diego, CA": contact_score += 3
+    if intel.get("location"): contact_score += 3
     scores["contact"] = min(contact_score, 10)
     
     sp = intel.get("social_proof", "")

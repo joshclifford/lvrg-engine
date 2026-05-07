@@ -158,7 +158,7 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         # ── Step 3: Generate site ────────────────────────────────────
         from slugify import slugify
         # Strip www. before building slug so www.foo.com → foo not www
-        _slug_domain = domain.lstrip('www.') if domain.startswith('www.') else domain
+        _slug_domain = domain.removeprefix('www.')
         prospect_id = slugify(_slug_domain.split(".")[0]) or slugify(_slug_domain.replace(".", "-"))
 
         yield sse("log", text="Generating Smart Site with Claude...", level="info")
