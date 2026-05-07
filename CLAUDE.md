@@ -26,8 +26,8 @@ python run_engine.py --file domains.txt --no-deploy
 | File | Responsibility |
 |------|---------------|
 | `api.py` | FastAPI app. Endpoints: `POST /build` (SSE pipeline), `POST /chat` (widget AI), `POST /migrate` (admin), `GET /health`. |
-| `intel.py` | `scrape_site(domain)` → HTTP fetch → Claude Haiku extract 21 fields → `grade_site(intel)` → 0–10 score. |
-| `generator.py` | `generate_site(intel, prospect_id, notes)` → Claude Opus HTML (12K tokens) + chat widget injection. `generate_email(intel, grade, prospect_id)` → Claude Opus 3 subject variants + body JSON. |
+| `intel.py` | `scrape_site(domain)` → Firecrawl (JS-rendered) with requests fallback → Claude Haiku extract 21 fields → `grade_site(intel)` → 0–10 score. |
+| `generator.py` | `generate_site(intel, prospect_id, notes)` → 2-pass Claude Opus (2×6K tokens, Pass 2 prefilled) + chat widget injection. `generate_email(intel, grade, prospect_id)` → Claude Opus 3 subject variants + body JSON. |
 | `deploy.py` | `deploy_site(prospect_id, site_dir)` → GitHub Git Data API: blob → tree → commit → ref update. No `git clone`. |
 | `instantly.py` | `get_or_create_campaign(name)`, `add_lead(campaign_id, intel, email_data)` against Instantly v2 API. |
 | `supabase_client.py` | `upsert_lead(...)`, `log_event(...)`, `update_engine_queue_result(...)`, `update_lead_status(...)` via urllib PostgREST. |
@@ -40,11 +40,12 @@ python run_engine.py --file domains.txt --no-deploy
 1. Normalize domain (strip protocol/path/query)
 2. Fetch contact email/phone from engine_queue (Scout pre-populated)
 3. scrape_site(domain)
-   ├─ HTTP GET site → strip HTML → first 4000 chars
+   ├─ Firecrawl (JS-rendered markdown + images) → fallback to requests if key missing
    └─ Claude Haiku → extract 21 fields as JSON
 4. grade_site(intel) → 7-dimension score (0–10), worth_targeting if 2≤score≤7
 5. generate_site(intel, prospect_id, notes)
-   ├─ Claude Opus (12K tokens) → full HTML
+   ├─ Pass 1: Claude Opus (6K tokens) → above-fold HTML (head + claim bar + nav + hero + social proof + services)
+   ├─ Pass 2: Claude Opus (6K tokens, prefilled with Pass 1) → below-fold (testimonials + CTA + footer)
    └─ inject chat widget → save to output/sites/{prospect_id}/index.html
 6. deploy_site(prospect_id, site_dir)           # skipped if no_deploy=True
    └─ GitHub Git Data API → joshclifford/lvrg-previews
@@ -63,7 +64,7 @@ SSE event types: `log`, `intel`, `grade`, `result`, `error`, `done`.
 | Function | Model | Tokens | Notes |
 |----------|-------|--------|-------|
 | `extract_intel_with_claude` | `claude-haiku-4-5` | 1,500 | Structured JSON extraction from scraped HTML |
-| `generate_site` | `claude-opus-4-5` | 12,000 | Full HTML generation — most expensive call |
+| `generate_site` | `claude-opus-4-5` | 6,000 ×2 | 2-pass generation — Pass 2 prefilled with Pass 1 for consistency |
 | `generate_email` | `claude-opus-4-5` | 1,500 | 3 subject variants + personalized body |
 | `POST /chat` | `claude-haiku-4-5` | 300 | Real-time chat widget replies |
 
@@ -97,8 +98,9 @@ SUPABASE_SERVICE_KEY=       # or SUPABASE_KEY or SUPABASE_ANON_KEY
 GITHUB_TOKEN=               # Personal access token for joshclifford/lvrg-previews
 
 # Optional
+CHAT_ENDPOINT=              # Chat widget URL baked into generated HTML (default: prod Railway URL)
 INSTANTLY_API_KEY=          # Only needed for CLI outreach
-FIRECRAWL_API_KEY=          # Defined but unused in v1 engine
+FIRECRAWL_API_KEY=          # Firecrawl API for JS-rendered content scraping
 LVRG_BRAND_ID=              # Override default brand UUID
 ```
 
@@ -120,10 +122,6 @@ GITHUB_USER    = "joshclifford"          # personal account, not an org
 GITHUB_REPO    = "lvrg-previews"
 PREVIEW_BASE_URL = "https://joshclifford.github.io/lvrg-previews"
 
-# generator.py
-CHAT_WIDGET_ENDPOINT = "https://lvrg-engine-production.up.railway.app/chat"
-# ⚠️ This is hardcoded in every generated HTML file. Chat widget won't work
-# on local dev unless you override this in generator.py.
 ```
 
 ## Output Files
@@ -173,11 +171,11 @@ CLI adds a 2s delay between prospects to avoid API throttling. Processes seriall
 
 ## Known Issues & Gotchas
 
-- **CORS is wide open** — `allow_origins=["*"]` in `api.py`. The Next.js proxy is the only security boundary on `/build`.
-- **No auth on `/build`** — anyone who knows the engine URL can trigger an Opus build. Never expose the engine URL publicly without adding auth.
-- **Chat widget endpoint is hardcoded** — `_lvrgEndpoint` in the injected JavaScript always points to prod. Change in `generator.py` for local testing.
+- **CORS** — allowlist configured in `api.py` (localhost:3000, lm-tool-production, joshclifford.github.io). Add new origins via `ALLOWED_ORIGINS` env var.
+- **Engine secret** — set `ENGINE_SECRET` env var (same value in both engine and lm-tool) to lock `/build` and `/chat` endpoints.
+- **Chat widget endpoint** — `_lvrgEndpoint` in the injected JS reads `CHAT_ENDPOINT` env var at generation time (defaults to prod Railway URL). Set `CHAT_ENDPOINT=http://localhost:8766/chat` in `.env` for local dev.
 - **Sender name/email mismatch** — `SENDER_NAME="Josh"` but `SENDER_EMAIL` is adam@... Check `config.py` before any outreach changes.
-- **`run_engine.py` log path is broken on Railway** — hardcoded to `/home/user/workspace/...`. Don't rely on run logs in production.
+- **`run_engine.py` log path** — writes to `output/run_<timestamp>.json` relative to the script location (fixed from old hardcoded Railway path).
 - **`supabase_client.py` uses urllib not the supabase Python client** — the `supabase==2.15.2` package is installed but not used for DB calls. All DB access goes through raw urllib PostgREST requests.
 - **No retry logic anywhere** — Claude, GitHub, Supabase, and Instantly calls all fail on first error. Wrap in retry if building reliability features.
 - **Silent JSON parse failures** — if Claude returns malformed JSON in intel extraction, `extract_intel_with_claude` silently returns `{}` and the pipeline continues with empty fields. No logging of the raw response.

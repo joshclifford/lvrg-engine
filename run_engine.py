@@ -221,7 +221,10 @@ def main():
         print(f"  {r['domain']} → {r['preview_url']}")
     
     # Save run log
-    log_path = f"/home/user/workspace/lvrg-engine/output/run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    from pathlib import Path
+    out_dir = Path(__file__).resolve().parent / "output"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log_path = out_dir / f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(log_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
     print(f"\nRun log saved: {log_path}")
