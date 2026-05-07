@@ -3,6 +3,13 @@ LVRG Engine — FastAPI Server
 Wraps the engine pipeline as an HTTP API with SSE streaming.
 """
 
+# Load .env before any engine modules read os.environ at import time
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import asyncio
 import json
 import os
@@ -10,7 +17,7 @@ import sys
 from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -24,14 +31,20 @@ from supabase_client import upsert_lead, log_event, update_engine_queue_result
 app = FastAPI(title="LVRG Engine API", version="1.2.0")
 
 
+def _supabase_rest_base() -> str:
+    return (
+        os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or ""
+    ).rstrip("/")
+
+
 @app.on_event("startup")
 async def run_migrations():
     """Add any missing columns to engine_queue on startup."""
     import urllib.request, urllib.error, json as _json
-    SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
+    SUPABASE_URL = _supabase_rest_base()
     SERVICE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
-    if not SERVICE_KEY:
-        print("[startup] SUPABASE_KEY not set, skipping column check")
+    if not SUPABASE_URL or not SERVICE_KEY:
+        print("[startup] SUPABASE_URL or SUPABASE_SERVICE_KEY not set, skipping column check")
         return
     # Try to SELECT the new columns — if they don't exist PostgREST returns a 400
     # We add them by calling a stored procedure if it exists, otherwise skip gracefully
@@ -56,11 +69,21 @@ async def run_migrations():
         print(f"[startup] migration check skipped: {e}")
 
 
+# Allowed browser origins. Extend via ALLOWED_ORIGINS env var (comma-separated).
+# joshclifford.github.io is required — deployed chat widgets call /chat from there.
+_DEFAULT_ORIGINS = [
+    "http://localhost:3000",
+    "https://lm-tool-production.up.railway.app",
+    "https://joshclifford.github.io",
+]
+_extra = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+ALLOWED_ORIGINS = list(dict.fromkeys(_DEFAULT_ORIGINS + _extra))  # deduplicate, preserve order
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-Engine-Secret"],
 )
 
 
@@ -103,12 +126,14 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         queue_contact = {}
         try:
             import urllib.request as _ur, urllib.parse as _up
+            _base = _supabase_rest_base()
             _key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
-            _url = f"https://fwcdiqfsjtwtlmekjqir.supabase.co/rest/v1/engine_queue?select=email,phone&domain=eq.{_up.quote(domain, safe='')}&limit=1"
-            _req = _ur.Request(_url, headers={"apikey": _key, "Authorization": f"Bearer {_key}"})
-            with _ur.urlopen(_req) as _res:
-                _rows = __import__('json').loads(_res.read().decode())
-                if _rows: queue_contact = _rows[0]
+            if _base and _key:
+                _url = f"{_base}/rest/v1/engine_queue?select=email,phone&domain=eq.{_up.quote(domain, safe='')}&limit=1"
+                _req = _ur.Request(_url, headers={"apikey": _key, "Authorization": f"Bearer {_key}"})
+                with _ur.urlopen(_req) as _res:
+                    _rows = __import__('json').loads(_res.read().decode())
+                    if _rows: queue_contact = _rows[0]
         except Exception:
             pass
 
@@ -216,9 +241,20 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         yield sse("done", status="error")
 
 
+def _check_engine_secret(request: Request) -> bool:
+    """Validates X-Engine-Secret header when ENGINE_SECRET env var is set."""
+    secret = os.environ.get("ENGINE_SECRET", "").strip()
+    if not secret:
+        return True  # secret not configured — allow (local dev)
+    return request.headers.get("X-Engine-Secret", "") == secret
+
+
 @app.post("/build")
-async def build(req: BuildRequest):
+async def build(req: BuildRequest, request: Request):
     """Run the full engine pipeline for a domain. Returns SSE stream."""
+    if not _check_engine_secret(request):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
     domain = req.domain.strip().lower()
     domain = domain.replace("https://", "").replace("http://", "")
     domain = domain.split("/")[0].split("?")[0].strip()
@@ -236,8 +272,11 @@ async def build(req: BuildRequest):
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
     """AI chat endpoint for Smart Site widgets. Responds as the business."""
+    if not _check_engine_secret(request):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
     import anthropic
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     client = anthropic.Anthropic(api_key=key)
@@ -285,8 +324,10 @@ async def migrate():
     )
     # Check if columns already exist
     import urllib.request, urllib.error
-    SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://fwcdiqfsjtwtlmekjqir.supabase.co")
+    SUPABASE_URL = _supabase_rest_base()
     KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not KEY:
+        return {"status": "error", "detail": "Set SUPABASE_URL and SUPABASE_SERVICE_KEY"}
     try:
         url = f"{SUPABASE_URL}/rest/v1/engine_queue?select=preview_url,email_json&limit=0"
         req = urllib.request.Request(url, headers={"apikey": KEY, "Authorization": f"Bearer {KEY}"})
