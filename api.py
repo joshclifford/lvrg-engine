@@ -73,8 +73,10 @@ async def run_migrations():
 # joshclifford.github.io is required — deployed chat widgets call /chat from there.
 _DEFAULT_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8766",
     "https://lm-tool-production.up.railway.app",
     "https://joshclifford.github.io",
+    "null",  # file:// origin — needed when previewing generated sites locally
 ]
 _extra = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 ALLOWED_ORIGINS = list(dict.fromkeys(_DEFAULT_ORIGINS + _extra))  # deduplicate, preserve order
@@ -82,7 +84,7 @@ ALLOWED_ORIGINS = list(dict.fromkeys(_DEFAULT_ORIGINS + _extra))  # deduplicate,
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "X-Engine-Secret"],
 )
 
@@ -168,17 +170,30 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         yield sse("log", text="Site generated", level="success")
 
         # ── Step 4: Deploy ───────────────────────────────────────────
+        # TEMP: GitHub Pages deploy disabled — no GITHUB_TOKEN available right now.
+        # When the key is added back, restore the original block below.
         preview_url = None
-        if not no_deploy:
-            yield sse("log", text="Deploying to GitHub Pages...", level="info")
-            try:
-                preview_url = await loop.run_in_executor(None, deploy_site, prospect_id, site_dir)
-                yield sse("log", text=f"Live at {preview_url}", level="success")
-            except Exception as e:
-                yield sse("log", text=f"Deploy failed: {e} — continuing", level="error")
-                preview_url = None
-        else:
-            preview_url = f"[local] {site_dir}/index.html"
+        index_path = os.path.join(site_dir, "index.html")
+        # Auto-open the generated site in the default browser for instant local preview.
+        try:
+            import webbrowser
+            webbrowser.open(f"file://{os.path.abspath(index_path)}")
+            yield sse("log", text=f"Opened in browser: {index_path}", level="success")
+        except Exception as e:
+            yield sse("log", text=f"Could not auto-open: {e}", level="dim")
+        preview_url = f"file://{os.path.abspath(index_path)}"
+
+        # --- Original deploy block (re-enable when GITHUB_TOKEN is available) ---
+        # if not no_deploy:
+        #     yield sse("log", text="Deploying to GitHub Pages...", level="info")
+        #     try:
+        #         preview_url = await loop.run_in_executor(None, deploy_site, prospect_id, site_dir)
+        #         yield sse("log", text=f"Live at {preview_url}", level="success")
+        #     except Exception as e:
+        #         yield sse("log", text=f"Deploy failed: {e} — continuing", level="error")
+        #         preview_url = None
+        # else:
+        #     preview_url = f"[local] {site_dir}/index.html"
 
         # ── Step 5: Generate email ───────────────────────────────────
         yield sse("log", text="Writing outreach messaging...", level="info")
@@ -283,33 +298,145 @@ async def chat(req: ChatRequest, request: Request):
 
     # Build system prompt from scraped intel
     intel = req.intel
-    system = f"""You are the AI assistant for {intel.get('business_name', 'this business')}.
-Answer questions warmly and helpfully as a knowledgeable team member.
-Keep responses concise — 1-3 sentences. Never say you are an AI unless directly asked.
+    business_name = intel.get('business_name', 'this business')
+    phone = intel.get('phone', '')
+    hours = intel.get('hours', '')
+    location = intel.get('location', '')
+    email = intel.get('email', '')
+    services = intel.get('services') or []
+    services_str = ', '.join(services) if services else 'not listed'
+    content_notes = intel.get('content_notes', '') or ''
+    cta_angle = intel.get('cta_angle', 'contact us')
 
-BUSINESS DETAILS:
-- Name: {intel.get('business_name', '')}
-- Description: {intel.get('description', '')}
-- Services: {', '.join(intel.get('services') or [])}
-- Location: {intel.get('location', '')}
-- Phone: {intel.get('phone', '')}
-- Hours: {intel.get('hours', '')}
-- Social proof: {intel.get('social_proof', '')}
-- Main CTA: {intel.get('cta_angle', 'contact us')}
+    # All Google reviews (up to 5 — sorted highest-rated first by places.py)
+    reviews = intel.get('reviews') or []
+    real_reviews = [r for r in reviews if (r.get('text') or '').strip()][:5]
+    rating = intel.get('google_rating', 0)
+    total = intel.get('google_total_ratings', 0)
 
-If asked about booking, reservations, or appointments, direct them to call or visit.
-If you don't know something specific, say you'll have the team follow up."""
+    if real_reviews:
+        review_lines = "\n".join(
+            f'  [{i+1}] {r.get("author", "Anonymous")} ({int(r.get("rating", 5))}★, {r.get("time_ago", "recently")}):\n      "{(r.get("text") or "").strip()}"'
+            for i, r in enumerate(real_reviews)
+        )
+        rating_line = f"{rating}★ average across {total} Google reviews" if rating else "rating not available"
+    else:
+        review_lines = "  (no Google reviews available for this business)"
+        rating_line = "rating not available"
+
+    # Full raw site content — chatbot's primary knowledge source for descriptions, FAQs, specials
+    raw_text = (intel.get('raw_text') or '').strip()
+
+    # Debug log — confirms what intel the widget actually sent us
+    first_review_preview = (real_reviews[0].get('text', '')[:80] + '...') if real_reviews else '(none)'
+    raw_preview = raw_text[:120].replace('\n', ' ') + '...' if raw_text else '(empty)'
+    print(f"  [chat] {business_name}")
+    print(f"         phone:{phone or '-'}  hours:{bool(hours)}  loc:{location[:60] or '-'}")
+    print(f"         reviews:{len(real_reviews)} (first: {first_review_preview})")
+    print(f"         raw_text:{len(raw_text)}chars  content_notes:{len(content_notes)}chars")
+    print(f"         raw preview: {raw_preview}")
+
+    system = f"""You are the live AI assistant for {business_name}. You work here. You have full knowledge of the business below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WEBSITE CONTENT (PRIMARY KNOWLEDGE SOURCE — search this first for any question about
+menu, food, drinks, products, services, history, philosophy, opening info, FAQs).
+This is the actual text from {business_name}'s website. Read it carefully — the answer
+to most questions is in here.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{raw_text if raw_text else '(no website content available)'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFIED BUSINESS FACTS:
+• Business name: {business_name}
+• About: {intel.get('description', '')}
+• Services / what we offer: {services_str}
+• Address / Location: {location or 'not listed'}
+• Phone: {phone or 'not listed'}
+• Email: {email or 'not listed'}
+• Hours: {hours or 'not listed'}
+• Social proof: {intel.get('social_proof', '') or 'not listed'}
+
+MENU / PRICES / NAMED ITEMS (use exact wording):
+{content_notes if content_notes else '(none extracted — pull menu items, drinks, food from WEBSITE CONTENT above)'}
+
+GOOGLE REVIEWS ({rating_line}, sorted highest-rated first):
+{review_lines}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ANSWER PROTOCOL — follow this exact order for every user question:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 — Identify question type:
+  • Phone / contact number? → use VERIFIED FACTS
+  • Hours / opening times? → use VERIFIED FACTS
+  • Address / location / where? → use VERIFIED FACTS (state exactly what's listed; never say only "United Kingdom" if more is listed)
+  • Reviews / ratings / "top review" / "what do customers say"? → use GOOGLE REVIEWS
+  • Menu / food / drinks / breakfast / lunch / coffee / what do you serve / what's on offer / popular items / specials → SEARCH WEBSITE CONTENT line by line for product names, dish names, drink types, prices. List what you find.
+  • About / history / philosophy / founders / story → SEARCH WEBSITE CONTENT carefully
+  • Anything else → SEARCH WEBSITE CONTENT first, then VERIFIED FACTS
+
+STEP 2 — Search the relevant section(s) above. Quote real names, real prices, real review text. Do NOT paraphrase prices or menu items.
+
+STEP 3 — If the answer is genuinely not in any section, say ONE of:
+  • "Best to call us at {phone or 'the number on our site'} — we'll have the exact details for you."
+  • "Pop in and we'll sort it for you" (if location is known)
+NEVER say "I'll have the team follow up" — there is no team callback system.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HARD RULES — break these and the answer is wrong:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. NEVER use markdown formatting. NO **bold**, NO *italic*, NO _underline_, NO # headings, NO bullet points with - or *.
+   Plain text only. The widget renders raw text — markdown shows as literal asterisks. To emphasise, use natural language.
+
+2. If GOOGLE REVIEWS has any reviews listed → answer "top review / best review / what do customers say" by quoting
+   the FIRST review in the list (highest-rated) with the author's name. Example:
+   "Our top review is from Lewis Newman: 'Nice decor inside, with a relaxing atmosphere...' — he gave us 5 stars."
+   NEVER say "I don't have access to reviews" if any review is in the list above.
+
+3. If WEBSITE CONTENT contains menu items / drinks / food names → list them when asked. Even if no prices are listed,
+   give the names. Example: "We do all-day breakfast — bacon sandwiches, sourdough toasties, full English plates,
+   plus our signature smoothies." NEVER say "I don't have menu details" if WEBSITE CONTENT has any food/drink terms.
+
+4. If location field has more than just a country → give the full string. Example: state "262 Brixton Hill, London"
+   not just "United Kingdom". If location is genuinely just "United Kingdom", say so honestly and offer the phone.
+
+5. NEVER say: "I don't have access to", "I cannot provide", "I'm an AI", "I'm not able to", "as a chatbot",
+   "I'll have the team follow up", "I'll get back to you". You ARE the source — you do not delegate.
+
+6. NEVER invent: prices, menu items, awards, certifications, staff names, founding year, capacity, addresses.
+   If it's not in the data above, say so honestly and redirect to phone/visit.
+
+7. NEVER recommend competitors or other businesses.
+
+8. Tone: warm, confident, local, helpful. 2-3 sentences max. Use "we" and "us". End with a soft invite to
+   {cta_angle} when natural — but no pushy CTAs every reply.
+
+9. Never reveal you are an AI unless directly asked. If asked, say "I'm the AI assistant for {business_name}, here to help with anything about us."
+"""
 
     messages = req.history[-10:] + [{"role": "user", "content": req.message}]
 
+    # Sonnet 4.6 — Haiku was failing to use the GOOGLE REVIEWS / WEBSITE CONTENT sections
+    # reliably. Sonnet follows the structured prompt and quotes the data verbatim.
     response = client.messages.create(
-        model="claude-haiku-4-5",
-        max_tokens=300,
+        model="claude-sonnet-4-6",
+        max_tokens=500,
         system=system,
         messages=messages,
     )
 
-    return {"reply": response.content[0].text.strip()}
+    reply = response.content[0].text.strip()
+    # Strip markdown that the widget can't render (bold, italic, headings, bullet markers)
+    import re as _re
+    reply = _re.sub(r'\*\*(.+?)\*\*', r'\1', reply)   # **bold** → bold
+    reply = _re.sub(r'(?<!\w)\*([^*\n]+?)\*(?!\w)', r'\1', reply)  # *italic* → italic
+    reply = _re.sub(r'(?<!\w)_([^_\n]+?)_(?!\w)', r'\1', reply)    # _italic_ → italic
+    reply = _re.sub(r'^#{1,6}\s+', '', reply, flags=_re.MULTILINE) # # headings
+    reply = _re.sub(r'^[\-\*]\s+', '', reply, flags=_re.MULTILINE) # bullet markers
+
+    return {"reply": reply}
 
 
 @app.post("/migrate")

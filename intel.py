@@ -9,7 +9,7 @@ import json
 import os
 import anthropic
 from config import INTEL_DIR
-import os
+from places import fetch_place_data
 
 def _get_client():
     key = os.environ.get("ANTHROPIC_API_KEY") or ""
@@ -118,13 +118,51 @@ def fetch_with_firecrawl(domain: str) -> tuple:
                     images.append(img)
         images = images[:5]
 
-        text = markdown[:4000] if markdown else ""
+        text = markdown[:8000] if markdown else ""
         print(f"  [intel] Firecrawl OK — {len(text)} chars, {len(images)} images")
         return text, images
 
     except Exception as e:
         print(f"  [intel] Firecrawl failed: {e}")
         return "", []
+
+
+def fetch_subpages(domain: str) -> str:
+    """Try common subpages (/menu, /about, /contact, /food) and return combined text.
+
+    Many sites keep their menu / pricing / about info on dedicated pages, not the homepage.
+    We probe a handful of common paths and concatenate any content found, so the chatbot
+    has access to menu items, prices, and about-us text.
+    """
+    base = f"https://{domain}" if not domain.startswith("http") else domain
+    paths = ["/menu", "/menus", "/food", "/drinks", "/about", "/about-us", "/contact", "/services"]
+    found_blocks: list[str] = []
+    import re
+
+    for path in paths:
+        url = base.rstrip("/") + path
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=8, allow_redirects=True)
+            if resp.status_code != 200:
+                continue
+            html = resp.text
+            # Skip if we got redirected back to homepage (404 → home pattern)
+            if len(html) < 500:
+                continue
+            # Strip scripts/styles, then tags
+            text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+            text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
+            text = re.sub(r'<[^>]+>', ' ', text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            if len(text) < 200:
+                continue
+            # Cap each subpage's contribution
+            found_blocks.append(f"\n\n--- {path} ---\n{text[:3500]}")
+            print(f"  [intel] Found subpage: {path} ({len(text)} chars)")
+        except Exception:
+            continue
+
+    return "".join(found_blocks)
 
 
 def fetch_site_content(domain: str) -> tuple:
@@ -177,13 +215,14 @@ Extract and return a JSON object with these fields:
 - cta_angle: The best CTA angle for this business - what they most want customers to do (string, e.g. "Book a Private Event", "Get a Free Quote", "Reserve a Table")
 - owner_name: Owner or decision maker first name if mentioned anywhere on the site (string, empty if not found)
 - neighborhood: Specific San Diego neighborhood or area, parsed from the location field (string, e.g. "North Park", "Little Italy", "Gaslamp", empty if unknown)
+- content_notes: Specific real details found in the scraped content that should appear verbatim in the site copy — menu items with prices, named dishes or services, specific pricing tiers, awards with years, notable staff names, signature offerings, or any concrete detail that makes this business unique. Pull exact text from the content. (string, empty if nothing specific found)
 
 Return ONLY valid JSON, no markdown, no explanation."""
 
     client = _get_client()
     response = client.messages.create(
         model="claude-haiku-4-5",
-        max_tokens=1500,
+        max_tokens=2000,
         messages=[{"role": "user", "content": prompt}]
     )
     
@@ -216,24 +255,52 @@ def scrape_site(domain: str) -> dict:
         print(f"  [intel] Falling back to requests scraper...")
         raw_text, images = fetch_site_content(domain)
 
+    # Probe common subpages (/menu, /about, /contact, etc.) and append any content.
+    # Many sites keep their menu and pricing on dedicated pages, not the homepage.
+    print(f"  [intel] Probing subpages for menu / about / contact content...")
+    subpage_text = fetch_subpages(domain)
+    if subpage_text:
+        raw_text = raw_text + subpage_text
+
     if raw_text:
-        print(f"  [intel] Extracting structured intel with Claude...")
+        print(f"  [intel] Extracting structured intel with Claude... ({len(raw_text)} chars total)")
         extracted = extract_intel_with_claude(domain, raw_text)
     else:
         extracted = {}
-    
-    # Build final intel object with fallbacks
+
+    business_name = extracted.get("business_name") or domain.split(".")[0].replace("-", " ").title()
+    location = extracted.get("location", "")
+
+    # Google Places enrichment — real reviews, verified phone/address/hours.
+    # Returns {} if GOOGLE_PLACES_API_KEY is not set, so we fall back to scraped data.
+    print(f"  [intel] Fetching Google Places data...")
+    places_data = fetch_place_data(business_name, location, domain=domain)
+    if places_data:
+        print(f"  [intel] Places: {places_data.get('rating', '?')}★ "
+              f"({places_data.get('total_ratings', 0)} ratings), "
+              f"{len(places_data.get('reviews', []))} reviews")
+
+    # Build final intel object — prefer Google Places data for contact info when available
+    # (Places data is verified by Google, often more accurate than the website itself).
+    # Address: if Places returns a full address (with comma — street + city) and the scraped
+    # location is short/generic (e.g. just "United Kingdom"), prefer the Places address.
+    places_address = places_data.get("address", "")
+    if places_address and "," in places_address and (not location or len(location) < 20 or "," not in location):
+        final_location = places_address
+    else:
+        final_location = location or places_address
+
     intel = {
         "domain": domain,
         "url": url,
-        "business_name": extracted.get("business_name") or domain.split(".")[0].replace("-", " ").title(),
+        "business_name": business_name,
         "tagline": extracted.get("tagline", ""),
         "description": extracted.get("description", f"Local business at {domain}"),
         "services": extracted.get("services", []),
-        "location": extracted.get("location", ""),
-        "phone": extracted.get("phone", ""),
+        "location": final_location,
+        "phone": extracted.get("phone", "") or places_data.get("phone", ""),
         "email": extracted.get("email", ""),
-        "hours": extracted.get("hours", ""),
+        "hours": extracted.get("hours", "") or places_data.get("hours", ""),
         "social_proof": extracted.get("social_proof", ""),
         "key_cta": extracted.get("key_cta", ""),
         "missing": extracted.get("missing", "chat widget, clear CTA, contact info"),
@@ -246,10 +313,16 @@ def scrape_site(domain: str) -> dict:
         "cta_angle": extracted.get("cta_angle", "Get in Touch"),
         "owner_name": extracted.get("owner_name", ""),
         "neighborhood": extracted.get("neighborhood", ""),
+        "content_notes": extracted.get("content_notes", ""),
+        # Google Places enrichment fields
+        "reviews": places_data.get("reviews", []),
+        "google_rating": places_data.get("rating", 0),
+        "google_total_ratings": places_data.get("total_ratings", 0),
+        "google_place_id": places_data.get("place_id", ""),
         "images": images,
-        "raw_text": raw_text[:1000],
+        "raw_text": raw_text[:15000],
     }
-    
+
     print(f"  [intel] ✓ {intel['business_name']} — {intel['business_type']} — {intel['location']}")
     
     # Save

@@ -368,3 +368,182 @@ class TestScrapeSiteFirecrawlFallback:
             from intel import scrape_site
             scrape_site("example.com")
         mock_req.assert_not_called()
+
+
+# ─── scrape_site intel dict fields ───────────────────────────────────────────
+
+class TestScrapeSiteIntelFields:
+
+    def test_content_notes_present_in_intel_dict(self):
+        """scrape_site must return content_notes key."""
+        with patch("intel.fetch_with_firecrawl", return_value=("", [])), \
+             patch("intel.fetch_site_content", return_value=("some text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert "content_notes" in intel
+
+    def test_content_notes_from_extracted(self):
+        """content_notes must propagate from Claude extraction."""
+        expected = "Tacos: $4 each, Burritos: $8, Nachos: $10"
+        with patch("intel.fetch_with_firecrawl", return_value=("", [])), \
+             patch("intel.fetch_site_content", return_value=("some text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"content_notes": expected}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["content_notes"] == expected
+
+    def test_content_notes_defaults_to_empty_string(self):
+        """content_notes defaults to '' when Claude returns nothing."""
+        with patch("intel.fetch_with_firecrawl", return_value=("", [])), \
+             patch("intel.fetch_site_content", return_value=("some text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["content_notes"] == ""
+
+    def test_raw_text_stored_at_4000_chars(self):
+        """raw_text in intel dict must be full 4000 chars, not 1000."""
+        long_text = "A" * 5000
+        with patch("intel.fetch_with_firecrawl", return_value=("", [])), \
+             patch("intel.fetch_site_content", return_value=(long_text[:4000], [])), \
+             patch("intel.extract_intel_with_claude", return_value={}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert len(intel["raw_text"]) == 4000
+
+    def test_raw_text_not_truncated_at_1000(self):
+        """raw_text must NOT be silently cut to 1000 chars."""
+        long_text = "B" * 4000
+        with patch("intel.fetch_with_firecrawl", return_value=("", [])), \
+             patch("intel.fetch_site_content", return_value=(long_text, [])), \
+             patch("intel.extract_intel_with_claude", return_value={}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert len(intel["raw_text"]) > 1000
+
+
+# ─── extract_intel_with_claude prompt coverage ───────────────────────────────
+
+class TestExtractIntelPrompt:
+
+    def _call_and_capture_prompt(self, mock_response: dict) -> str:
+        """Run extract_intel_with_claude and return the prompt sent to Claude."""
+        import json as _json
+        captured = {}
+        mock_msg = MagicMock()
+        mock_msg.content = [MagicMock(text=_json.dumps(mock_response))]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_msg
+
+        with patch("intel._get_client", return_value=mock_client):
+            from intel import extract_intel_with_claude
+            extract_intel_with_claude("example.com", "some site content")
+
+        call_kwargs = mock_client.messages.create.call_args
+        captured["prompt"] = call_kwargs[1]["messages"][0]["content"]
+        captured["max_tokens"] = call_kwargs[1]["max_tokens"]
+        return captured
+
+    def test_prompt_includes_content_notes_field(self):
+        result = self._call_and_capture_prompt({})
+        assert "content_notes" in result["prompt"]
+
+    def test_prompt_asks_for_menu_items_and_pricing(self):
+        result = self._call_and_capture_prompt({})
+        prompt = result["prompt"]
+        assert "menu" in prompt.lower() or "price" in prompt.lower() or "pricing" in prompt.lower()
+
+    def test_max_tokens_increased_to_2000(self):
+        result = self._call_and_capture_prompt({})
+        assert result["max_tokens"] == 2000
+
+
+# ─── scrape_site Google Places enrichment ────────────────────────────────────
+
+class TestScrapeSitePlacesEnrichment:
+
+    def test_intel_includes_reviews_from_places(self):
+        sample_reviews = [
+            {"author": "Jane", "rating": 5, "text": "Best ever!", "time_ago": "2 weeks ago"}
+        ]
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"business_name": "Test"}), \
+             patch("intel.fetch_place_data", return_value={
+                 "place_id": "PID",
+                 "rating": 4.7,
+                 "total_ratings": 200,
+                 "reviews": sample_reviews,
+                 "address": "",
+                 "phone": "",
+                 "hours": "",
+             }), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["reviews"] == sample_reviews
+        assert intel["google_rating"] == 4.7
+        assert intel["google_total_ratings"] == 200
+        assert intel["google_place_id"] == "PID"
+
+    def test_reviews_default_to_empty_list_when_places_unavailable(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={}), \
+             patch("intel.fetch_place_data", return_value={}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["reviews"] == []
+        assert intel["google_rating"] == 0
+        assert intel["google_total_ratings"] == 0
+
+    def test_places_phone_used_when_scraped_phone_missing(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"phone": ""}), \
+             patch("intel.fetch_place_data", return_value={"phone": "(619) 555-1234"}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["phone"] == "(619) 555-1234"
+
+    def test_scraped_phone_preferred_over_places_phone(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"phone": "555-0000"}), \
+             patch("intel.fetch_place_data", return_value={"phone": "(619) 555-1234"}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        # Site-scraped phone wins (it's the number the business actually publishes)
+        assert intel["phone"] == "555-0000"
+
+    def test_places_hours_used_when_scraped_hours_missing(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"hours": ""}), \
+             patch("intel.fetch_place_data", return_value={"hours": "Mon: 9-5"}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["hours"] == "Mon: 9-5"
+
+    def test_places_address_used_when_scraped_location_missing(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"location": ""}), \
+             patch("intel.fetch_place_data", return_value={"address": "123 Main St"}), \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            intel = scrape_site("example.com")
+        assert intel["location"] == "123 Main St"
+
+    def test_places_called_with_business_name_and_location(self):
+        with patch("intel.fetch_with_firecrawl", return_value=("text", [])), \
+             patch("intel.extract_intel_with_claude", return_value={"business_name": "Test Bistro", "location": "San Diego"}), \
+             patch("intel.fetch_place_data", return_value={}) as mock_places, \
+             patch("os.makedirs"), patch("builtins.open", MagicMock()):
+            from intel import scrape_site
+            scrape_site("example.com")
+        mock_places.assert_called_once_with("Test Bistro", "San Diego")

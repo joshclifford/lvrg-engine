@@ -26,7 +26,8 @@ python run_engine.py --file domains.txt --no-deploy
 | File | Responsibility |
 |------|---------------|
 | `api.py` | FastAPI app. Endpoints: `POST /build` (SSE pipeline), `POST /chat` (widget AI), `POST /migrate` (admin), `GET /health`. |
-| `intel.py` | `scrape_site(domain)` → Firecrawl (JS-rendered) with requests fallback → Claude Haiku extract 21 fields → `grade_site(intel)` → 0–10 score. |
+| `intel.py` | `scrape_site(domain)` → Firecrawl (JS-rendered) with requests fallback → Claude Haiku extract 22 fields → Google Places enrichment (real reviews + verified contact) → `grade_site(intel)` → 0–10 score. |
+| `places.py` | `fetch_place_data(business_name, location)` → Google Places API: Find Place → Place Details → returns reviews, rating, verified address/phone/hours. Returns `{}` when key absent. |
 | `generator.py` | `generate_site(intel, prospect_id, notes)` → 2-pass Claude Opus (2×6K tokens, Pass 2 prefilled) + chat widget injection. `generate_email(intel, grade, prospect_id)` → Claude Opus 3 subject variants + body JSON. |
 | `deploy.py` | `deploy_site(prospect_id, site_dir)` → GitHub Git Data API: blob → tree → commit → ref update. No `git clone`. |
 | `instantly.py` | `get_or_create_campaign(name)`, `add_lead(campaign_id, intel, email_data)` against Instantly v2 API. |
@@ -101,6 +102,7 @@ GITHUB_TOKEN=               # Personal access token for joshclifford/lvrg-previe
 CHAT_ENDPOINT=              # Chat widget URL baked into generated HTML (default: prod Railway URL)
 INSTANTLY_API_KEY=          # Only needed for CLI outreach
 FIRECRAWL_API_KEY=          # Firecrawl API for JS-rendered content scraping
+GOOGLE_PLACES_API_KEY=      # Google Places API — real customer reviews + verified contact info
 LVRG_BRAND_ID=              # Override default brand UUID
 ```
 
