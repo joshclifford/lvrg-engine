@@ -9,6 +9,7 @@ import json
 from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
+import design_system
 
 def _is_light_color(hex_color: str) -> bool:
     """True if a hex color is too light to use as a button bg on a dark background."""
@@ -165,13 +166,22 @@ def _get_client():
     return anthropic.Anthropic(api_key=key)
 
 
-def _build_part1_prompt(intel: dict, notes_block: str, hero_bg_instruction: str, image_rule: str) -> str:
-    """Prompt for Call 1 — above-fold sections (head through services)."""
+def _build_part1_prompt(intel: dict, notes_block: str, hero_bg_instruction: str, image_rule: str, design_spec: dict = None) -> str:
+    """Prompt for Call 1 — above-fold sections (head through services).
+
+    `design_spec` (optional) is the DesignSpec dict returned by
+    design_system.compose_design(). When present, a "DESIGN VARIATION SPEC"
+    block is prepended that pins the section order, layout variants, fonts,
+    and CSS-var references so two prospects end up with visibly different
+    pages. When None (e.g. legacy callers, some test paths), the prompt
+    falls back to the prior behaviour.
+    """
     primary = intel.get('primary_color', '#1a1a2e')
     secondary = intel.get('secondary_color', '#333')
     raw_text = intel.get('raw_text', '') or ''
     content_notes = intel.get('content_notes') or ''
-    return f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
+    design_block = design_system.render_part1_design_block(design_spec) + "\n" if design_spec else ""
+    return f"""{design_block}You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRIMARY COPY SOURCE — this is the actual content from the prospect's website.
@@ -284,58 +294,170 @@ End your response with exactly: <!-- CONTINUE -->"""
 
 
 def _build_footer(intel: dict) -> str:
-    """Build a data-rich HTML footer from intel — Python-generated so it always appears."""
+    """Build a data-rich HTML footer from intel — Python-generated so it always appears.
+
+    Layout strategy (replaces the old flex:2/flex:1 design that broke at tablet widths):
+
+    * CSS Grid with `repeat(auto-fit, minmax(min(100%, 220px), 1fr))` — columns fold to
+      a single column under ~880px and never strand a half-empty column at any width.
+    * Content-aware column count: empty fields don't render a column. We never produce
+      a tall column that holds one short fallback line of text.
+    * If contact OR hours are missing, we surface a "What we offer" column from the
+      services list so the grid stays balanced (always 2-4 columns of real content).
+    * Single-column case (only brand info exists) → centred narrow layout, no stretched
+      empty rails.
+    * Every column carries `min-width:0` + `overflow-wrap:break-word` so long phone
+      numbers / emails / addresses wrap cleanly instead of overflowing the cell.
+    * Inner content max-width is enforced (`max-width:1100px`) so the footer never
+      stretches edge-to-edge on ultra-wide displays.
+
+    Vertical spacing comes from `padding` only — never `margin` — so the section flows
+    cleanly off whatever sits above (CTA banner) without compounding whitespace.
+    """
     primary = intel.get('primary_color', '#1a1a2e')
     secondary = intel.get('secondary_color', '#c9a961')
-    # If secondary is too light (e.g. #fff) it becomes invisible on dark footer — fall back to primary
+    # Footer bg must be dark for white text legibility. If the brand primary is itself
+    # too light (e.g. pale brand colours), fall back to a neutral near-black.
+    footer_bg = primary if not _is_light_color(primary) else "#0f172a"
+    # CTA button bg: prefer secondary; fall back to primary if secondary is too pale to read white text on.
     cta_bg = primary if _is_light_color(secondary) else secondary
-    name = intel.get('business_name', '')
-    location = intel.get('location', '')
-    phone = intel.get('phone', '')
-    email = intel.get('email', '')
-    hours = intel.get('hours', '')
-    cta = intel.get('cta_angle', 'Get in Touch')
+    # Section-heading colour (eyebrow): must read on dark footer_bg. If secondary is
+    # close to footer_bg (e.g. another dark colour), tint it up toward white.
+    heading_colour = secondary if not _is_light_color(footer_bg) or _is_light_color(secondary) else secondary
 
-    contact_items = []
-    if location:
-        contact_items.append(f'<div style="margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;"><span style="opacity:0.6;">📍</span><span>{location}</span></div>')
-    if phone:
-        contact_items.append(f'<div style="margin-bottom:10px;"><a href="tel:{phone}" style="color:rgba(255,255,255,0.8);text-decoration:none;display:flex;gap:10px;align-items:center;"><span style="opacity:0.6;">📞</span><span>{phone}</span></a></div>')
-    if email:
-        contact_items.append(f'<div style="margin-bottom:10px;"><a href="mailto:{email}" style="color:rgba(255,255,255,0.8);text-decoration:none;display:flex;gap:10px;align-items:center;"><span style="opacity:0.6;">✉</span><span>{email}</span></a></div>')
-    contact_html = '\n'.join(contact_items) if contact_items else '<div style="color:rgba(255,255,255,0.4);font-size:14px;">Contact us online</div>'
+    name = (intel.get('business_name') or '').strip()
+    desc = (intel.get('description') or '').strip()
+    if len(desc) > 180:
+        desc = desc[:177].rstrip() + '…'
+    location = (intel.get('location') or '').strip()
+    phone = (intel.get('phone') or '').strip()
+    email = (intel.get('email') or '').strip()
+    hours = (intel.get('hours') or '').strip()
+    cta = (intel.get('cta_angle') or '').strip() or 'Get in Touch'
+    services = [s for s in (intel.get('services') or []) if s and isinstance(s, str)][:4]
 
-    hours_html = (
-        f'<div style="color:rgba(255,255,255,0.8);font-size:14px;line-height:1.9;white-space:pre-line;">{hours}</div>'
-        if hours else
-        '<div style="color:rgba(255,255,255,0.4);font-size:14px;">Call for hours</div>'
+    has_contact = bool(location or phone or email)
+    has_hours = bool(hours)
+    # Only surface a services column when at least one of (contact, hours) is missing —
+    # otherwise we'd push to 4 columns which crowds the grid at desktop widths.
+    show_services_col = (len(services) >= 2) and not (has_contact and has_hours)
+
+    # ── Column: brand (always rendered) ────────────────────────────────────────
+    brand_col = (
+        '<div style="min-width:0;">'
+        f'<div style="font-size:22px;font-weight:700;color:#ffffff;margin:0 0 14px;letter-spacing:-0.3px;line-height:1.25;overflow-wrap:break-word;">{name}</div>'
+        f'<div style="font-size:14px;color:rgba(255,255,255,0.62);line-height:1.7;margin:0 0 26px;max-width:42ch;overflow-wrap:break-word;">{desc}</div>'
+        f'<a href="{BOOKING_URL}" style="display:inline-block;background:{cta_bg};color:#ffffff;padding:13px 26px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:all 0.2s ease;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-width:100%;" '
+        'onmouseover="this.style.opacity=\'0.88\';this.style.transform=\'translateY(-1px)\'" '
+        'onmouseout="this.style.opacity=\'1\';this.style.transform=\'translateY(0)\'">'
+        f'{cta} →</a>'
+        '</div>'
     )
 
-    desc = (intel.get('description') or '')[:160]
+    # ── Column: contact (only if we have at least one of location/phone/email) ─
+    contact_col = ''
+    if has_contact:
+        items: list[str] = []
+        if location:
+            items.append(
+                '<div style="margin:0 0 10px;display:flex;gap:10px;align-items:flex-start;line-height:1.6;">'
+                '<span style="opacity:0.55;flex-shrink:0;line-height:1.6;">📍</span>'
+                f'<span style="overflow-wrap:break-word;min-width:0;flex:1;">{location}</span>'
+                '</div>'
+            )
+        if phone:
+            items.append(
+                f'<div style="margin:0 0 10px;"><a href="tel:{phone}" style="color:rgba(255,255,255,0.82);text-decoration:none;display:inline-flex;gap:10px;align-items:center;line-height:1.6;overflow-wrap:break-word;">'
+                '<span style="opacity:0.55;">📞</span>'
+                f'<span>{phone}</span></a></div>'
+            )
+        if email:
+            items.append(
+                f'<div style="margin:0 0 10px;"><a href="mailto:{email}" style="color:rgba(255,255,255,0.82);text-decoration:none;display:inline-flex;gap:10px;align-items:flex-start;line-height:1.6;word-break:break-all;">'
+                '<span style="opacity:0.55;flex-shrink:0;">✉</span>'
+                f'<span>{email}</span></a></div>'
+            )
+        contact_col = (
+            '<div style="min-width:0;">'
+            f'<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:{heading_colour};margin:0 0 18px;">Contact</div>'
+            f'<div style="font-size:14px;color:rgba(255,255,255,0.8);">{"".join(items)}</div>'
+            '</div>'
+        )
 
-    return f"""<footer style="background:{primary};padding:64px 24px 0;margin-top:0;">
-  <div style="max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:48px;padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,0.1);">
-    <div style="flex:2;min-width:220px;">
-      <div style="font-size:22px;font-weight:700;color:#ffffff;margin-bottom:14px;letter-spacing:-0.3px;">{name}</div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.75;margin-bottom:28px;">{desc}</div>
-      <a href="{BOOKING_URL}" style="display:inline-block;background:{cta_bg};color:#fff;padding:13px 26px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:all 0.2s ease;box-shadow:0 4px 16px rgba(0,0,0,0.25);" onmouseover="this.style.opacity='0.85';this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">{cta} →</a>
-    </div>
-    <div style="flex:1;min-width:180px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:{secondary};margin-bottom:20px;">Contact</div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.9;">
-        {contact_html}
-      </div>
-    </div>
-    <div style="flex:1;min-width:180px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:{secondary};margin-bottom:20px;">Hours</div>
-      {hours_html}
-    </div>
-  </div>
-  <div style="max-width:1100px;margin:0 auto;padding:20px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-    <div style="font-size:13px;color:rgba(255,255,255,0.35);">© 2025 {name}. All rights reserved.</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.25);">Smart Site by <a href="https://{SENDER_WEBSITE}" style="color:rgba(255,255,255,0.4);text-decoration:none;">LVRG Agency</a></div>
-  </div>
-</footer>"""
+    # ── Column: hours (always rendered when present, with fallback line) ──────
+    if has_hours:
+        hours_body = f'<div style="color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;white-space:pre-line;overflow-wrap:break-word;">{hours}</div>'
+    else:
+        hours_body = '<div style="color:rgba(255,255,255,0.4);font-size:14px;line-height:1.55;">Call for hours</div>'
+    hours_col = (
+        '<div style="min-width:0;">'
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:{heading_colour};margin:0 0 18px;">Hours</div>'
+        f'{hours_body}'
+        '</div>'
+    )
+
+    # ── Column: services (only when grid would otherwise feel thin) ───────────
+    services_col = ''
+    if show_services_col:
+        items_html = ''.join(
+            f'<li style="margin:0 0 9px;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.55;overflow-wrap:break-word;">{s}</li>'
+            for s in services
+        )
+        services_col = (
+            '<div style="min-width:0;">'
+            f'<div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:{heading_colour};margin:0 0 18px;">What we offer</div>'
+            f'<ul style="list-style:none;padding:0;margin:0;">{items_html}</ul>'
+            '</div>'
+        )
+
+    columns = [brand_col]
+    if contact_col:
+        columns.append(contact_col)
+    columns.append(hours_col)
+    if services_col:
+        columns.append(services_col)
+
+    # Single-column edge case (no contact, no hours, no services) → centre the brand
+    # at a narrow max-width so it doesn't become a tall ribbon on the left edge.
+    if len(columns) == 1:
+        grid_inner = (
+            '<div style="max-width:520px;margin:0 auto;">'
+            f'{columns[0]}'
+            '</div>'
+        )
+    else:
+        cols_joined = '\n      '.join(columns)
+        # `repeat(auto-fit, minmax(min(100%, 220px), 1fr))`:
+        #   - On narrow screens the inner `min(100%, 220px)` resolves to 100%, so
+        #     columns stack one-per-row without ever overflowing the viewport.
+        #   - On wider screens it resolves to 220px, so we fit as many equal columns
+        #     as the row will hold.
+        # `align-items:start` prevents the grid from stretching a short column to
+        # match a tall neighbour (which used to leave empty space inside columns).
+        grid_inner = (
+            '<div style="display:grid;'
+            'grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr));'
+            'gap:40px 36px;align-items:start;">'
+            f'\n      {cols_joined}\n    '
+            '</div>'
+        )
+
+    return (
+        f'<footer style="background:{primary};padding:72px 24px 0;margin-top:0;color:#ffffff;'
+        'overflow:hidden;">\n'
+        # An outer "shell" sets the background. The inner div constrains content to a
+        # readable max-width and renders the bottom divider above the copyright row.
+        f'  <div style="max-width:1100px;margin:0 auto;padding-bottom:44px;'
+        'border-bottom:1px solid rgba(255,255,255,0.1);">\n'
+        f'    {grid_inner}\n'
+        '  </div>\n'
+        '  <div style="max-width:1100px;margin:0 auto;padding:20px 0 24px;'
+        'display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;">\n'
+        f'    <div style="font-size:13px;color:rgba(255,255,255,0.38);">© 2025 {name}. All rights reserved.</div>\n'
+        f'    <div style="font-size:12px;color:rgba(255,255,255,0.28);">Smart Site by <a href="https://{SENDER_WEBSITE}" style="color:rgba(255,255,255,0.45);text-decoration:none;">LVRG Agency</a></div>\n'
+        '  </div>\n'
+        '</footer>'
+    )
 
 
 def _build_testimonials(intel: dict) -> str:
@@ -400,14 +522,23 @@ def _build_testimonials(intel: dict) -> str:
     if rating_avg and total:
         rating_badge = f'<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,0.04);padding:8px 16px;border-radius:24px;margin-top:16px;font-size:13px;color:#666;"><span style="color:{accent};font-weight:700;">{rating_avg}★</span><span>{total} Google reviews</span></div>'
 
-    return f'''<section style="background:#f8f9fb;padding:96px 24px;">
+    # Adapt the grid container max-width to the actual review count so 1-2 cards
+    # don't strand themselves in the middle of a too-wide row with empty rails on
+    # either side. The card max-width is 380px + 24px gap, so for n cards the
+    # natural row width is roughly n*380 + (n-1)*24. We cap the outer container
+    # to that width (plus breathing room) so the cards line up tightly and feel
+    # intentional rather than centred-in-emptiness.
+    n_reviews = len(real_reviews)
+    grid_max_width = {1: 480, 2: 820, 3: 1200}.get(n_reviews, 1200)
+
+    return f'''<section style="background:#f8f9fb;padding:96px 24px;overflow:hidden;">
   <div style="max-width:1200px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:56px;">
       <p style="color:{accent};font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Loved by locals</p>
       <h2 style="font-size:clamp(32px,4.5vw,44px);font-weight:700;color:#1a1a1a;margin:0 0 8px;line-height:1.15;">What our customers are saying</h2>
       {rating_badge}
     </div>
-    <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:stretch;">
+    <div style="max-width:{grid_max_width}px;margin:0 auto;display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:stretch;">
 {chr(10).join(cards)}
     </div>
   </div>
@@ -415,8 +546,18 @@ def _build_testimonials(intel: dict) -> str:
 '''
 
 
-def _build_part2_prompt(intel: dict) -> str:
-    """Prompt for Call 2 — below-fold sections (testimonials + CTA). Footer is Python-generated."""
+def _build_part2_prompt(intel: dict, design_spec: dict = None, existing_html: str = "") -> str:
+    """Prompt for Call 2 — CTA banner section. Footer + testimonials are Python-generated.
+
+    `design_spec` (optional) reinforces font + palette continuity with Part 1
+    and pins the CTA variant. Falls back to the prior behaviour when omitted.
+
+    `existing_html` (optional) is the Part 1 + Python-testimonials HTML that has
+    already been generated. We embed it inside the user message as context so
+    Claude knows what design system / fonts / colour scheme to match. This is
+    used INSTEAD OF the older assistant-prefill technique because newer Anthropic
+    models (claude-opus-4-7 onward) don't support prefilled assistant messages.
+    """
     city = intel.get('location', '').split(',')[0] if intel.get('location') else 'their city'
     primary = intel.get('primary_color', '#1a1a2e')
     secondary = intel.get('secondary_color', '#333')
@@ -424,8 +565,24 @@ def _build_part2_prompt(intel: dict) -> str:
 
     raw_text = intel.get('raw_text', '') or ''
     content_notes = intel.get('content_notes') or ''
+    design_block = design_system.render_part2_design_block(design_spec) + "\n" if design_spec else ""
 
-    return f"""Continue this HTML page. Generate ONLY the CTA banner section using the exact same design system, fonts, and inline-style patterns already established above.
+    context_block = ""
+    if existing_html:
+        # Trim to keep token usage in check — the design system is set by the
+        # <head> tokens block; we only need enough of the body for Claude to
+        # match the visual language. Tail 4000 chars covers nav + hero + part of
+        # services which is plenty of context.
+        snippet = existing_html[-4000:] if len(existing_html) > 4000 else existing_html
+        context_block = (
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            "HTML ALREADY ON THE PAGE (do NOT re-output this — match its design system):\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"{snippet}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        )
+
+    return f"""{design_block}{context_block}Continue this HTML page. Generate ONLY the CTA banner section using the exact same design system, fonts, and inline-style patterns already established above.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRIMARY COPY SOURCE — actual content from the prospect's website.
@@ -454,6 +611,14 @@ BRAND VARIABLES (must match Part 1 exactly — do not drift):
 
 SECTION TO ADD (CTA banner only — testimonials and footer are injected separately, do NOT write either):
 CTA BANNER: full-width section, bold headline, 1-2 sentences of copy, one large CTA button → {BOOKING_URL}. NO form, NO input fields, NO textarea — buttons and text only.
+
+⚠️ LAYOUT SAFETY (mandatory — prevents the lower-section collapse we are explicitly trying to fix):
+- The <section> element gets the full-width background colour. Its vertical padding must be SYMMETRICAL (e.g. padding:88px 24px — same value top and bottom).
+- ZERO margin on the <section>: never margin-top, never margin-bottom. Spacing comes from padding only — margins compound with the footer's padding and create dead whitespace.
+- Inside the <section>, put an inner container: <div style="max-width:960px;margin:0 auto;text-align:center;"> — this is what holds the heading / subcopy / button. NEVER let copy span 100vw — it becomes unreadable on wide screens.
+- The CTA button must have an explicit max-width (e.g. max-width:320px) so it never stretches edge-to-edge on mobile.
+- After the closing </section> output NOTHING ELSE — no extra <div>, no <footer>, no </body>, no </html>. LVRG injects the footer + closes the document.
+- Every child element inside the section must close before </section>. Do not leave <div> or <a> elements open.
 
 DESIGN RULES (same system as above):
 - Buttons: border-radius 8–12px, padding 14px 28px, font-weight 600, transition:all 0.2s ease inline
@@ -500,6 +665,26 @@ def _close_unclosed_elements(html: str) -> str:
     return html
 
 
+def _parse_to_head_body(html: str):
+    """Parse html5lib once and return (head_inner_html, body_inner_html, html_attrs).
+    All unclosed tags inside body are auto-closed by the parser. Returns None on failure."""
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, 'html5lib')
+        body = soup.body
+        head = soup.head
+        if body is None or head is None:
+            return None
+        head_html = ''.join(str(c) for c in head.contents)
+        body_html = ''.join(str(c) for c in body.contents)
+        html_attrs = ''
+        if soup.html and soup.html.attrs:
+            html_attrs = ''.join(f' {k}="{v}"' for k, v in soup.html.attrs.items())
+        return head_html, body_html, html_attrs
+    except Exception:
+        return None
+
+
 def _repair_html_structure(html: str) -> str:
     """Parse Claude's HTML with a browser-grade parser (html5lib) and re-emit valid HTML.
 
@@ -511,24 +696,34 @@ def _repair_html_structure(html: str) -> str:
     html5lib mimics a real browser's parser — it correctly closes implicit and missing tags
     and produces a well-formed tree, so when we serialize back the structure is valid.
     """
-    try:
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html, 'html5lib')
-        body = soup.body
-        head = soup.head
-        if body is None or head is None:
-            return html  # Bail safely if parser couldn't find the structure
-        head_html = ''.join(str(c) for c in head.contents)
-        body_html = ''.join(str(c) for c in body.contents)
-        # Preserve original DOCTYPE / html lang
-        doctype = '<!DOCTYPE html>'
-        html_attrs = ''
-        if soup.html and soup.html.attrs:
-            html_attrs = ''.join(f' {k}="{v}"' for k, v in soup.html.attrs.items())
-        return f"{doctype}\n<html{html_attrs}>\n<head>{head_html}</head>\n<body>{body_html}</body>\n</html>"
-    except Exception as e:
-        print(f"  [generator] HTML repair skipped: {e}")
+    parsed = _parse_to_head_body(html)
+    if not parsed:
         return html
+    head_html, body_html, html_attrs = parsed
+    return f"<!DOCTYPE html>\n<html{html_attrs}>\n<head>{head_html}</head>\n<body>{body_html}</body>\n</html>"
+
+
+def _normalize_part1_for_stitching(part1_html: str) -> str:
+    """Parse Part 1 alone with html5lib and re-emit a document that ends with
+    <body> open but every container inside it closed.
+
+    Why this is critical: Part 1 typically ends mid-document after the services
+    section, leaving <section>/<div> wrappers unclosed. When we textually append
+    the testimonials section + Pass-2 CTA banner + footer to that raw string,
+    those new sections become CHILDREN of the unclosed Part 1 containers (HTML5
+    spec says <section> does NOT auto-close another <section>). Result: footer
+    + chat widget render inside a services grid cell with stretched alignment,
+    huge whitespace, broken responsive stacking.
+
+    By parsing Part 1 first, every implicit close gets resolved BEFORE any
+    sibling content is appended — so testimonials/CTA/footer land at body level
+    where they belong."""
+    parsed = _parse_to_head_body(part1_html)
+    if not parsed:
+        return part1_html
+    head_html, body_html, html_attrs = parsed
+    # End with <body> open and a newline so subsequent append targets body scope.
+    return f"<!DOCTYPE html>\n<html{html_attrs}>\n<head>{head_html}</head>\n<body>\n{body_html}\n"
 
 
 def _clean_html(html: str) -> str:
@@ -653,7 +848,34 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     primary = intel.get('primary_color', '#1a1a2e')
     secondary = intel.get('secondary_color', '#333')
 
-    if hero_image:
+    # ── Compose a DesignSpec for this prospect ────────────────────────────────
+    # Seeded by domain, so re-generating the same prospect gives the same look.
+    # Wrapped: any failure here MUST NOT block the existing pipeline — we just
+    # fall back to the legacy non-variant prompts.
+    design_spec = None
+    try:
+        design_spec = design_system.compose_design(
+            intel,
+            has_reachable_image=bool(hero_image),
+        )
+        print(
+            f"  [generator] design: personality={design_spec['personality']} "
+            f"hero={design_spec['variants']['hero']['id']} "
+            f"services={design_spec['variants']['services']['id']} "
+            f"cta={design_spec['variants']['cta']['id']} "
+            f"fonts={design_spec['fonts']['heading']}/{design_spec['fonts']['body']}"
+        )
+    except Exception as e:
+        print(f"  [generator] design spec skipped: {e}")
+
+    # Hero background instruction depends on (a) whether we have a reachable
+    # image AND (b) which hero variant the spec picked. background_overlay uses
+    # the image full-bleed; inline_column uses an <img> in a flex column;
+    # no_image variants get a gradient/flat surface only.
+    hero_strategy = (
+        design_system.hero_image_strategy(design_spec) if design_spec else "background_overlay"
+    )
+    if hero_image and hero_strategy == "background_overlay":
         hero_bg_instruction = (
             f"CSS background combining a real photo + overlay for readability: "
             f"background: linear-gradient(rgba(0,0,0,0.52), rgba(0,0,0,0.42)), "
@@ -662,7 +884,14 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
             f"(The gradient fires if the image fails — keep it always.)"
         )
         image_rule = "- Hero uses a real photo from their site (URL provided below). Apply dark overlay so text stays readable."
+    elif hero_image and hero_strategy == "inline_column":
+        hero_bg_instruction = (
+            f"Hero SECTION background: linear-gradient(135deg, {primary}, {secondary}) — flat gradient, NO photo as background. "
+            f"The hero image goes INSIDE a column as an <img src='{hero_image}' style='width:100%;height:auto;border-radius:var(--lvrg-radius-lg);box-shadow:var(--lvrg-shadow-lg);object-fit:cover;'> per the hero variant spec."
+        )
+        image_rule = f"- Hero photo URL: {hero_image} — use it as an <img> inside the hero's visual column (NOT as a section background). Apply rounded corners + shadow via inline style."
     else:
+        # no_image OR no reachable image — gradient/flat only
         hero_bg_instruction = f"CSS gradient background: linear-gradient(135deg, {primary}, {secondary})"
         image_rule = "- NO external image URLs — use CSS gradients and background colors for all visual sections"
 
@@ -671,30 +900,36 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     # ── Pass 1: above fold (head + claim bar + nav + hero + social proof + services) ──
     print(f"  [generator] Pass 1/2 — above fold...")
     resp1 = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-opus-4-7",
         max_tokens=6000,
-        messages=[{"role": "user", "content": _build_part1_prompt(intel, notes_block, hero_bg_instruction, image_rule)}]
+        messages=[{"role": "user", "content": _build_part1_prompt(intel, notes_block, hero_bg_instruction, image_rule, design_spec)}]
     )
     part1 = _strip_fences(resp1.content[0].text)
     part1_prefill = part1.replace("<!-- CONTINUE -->", "").rstrip()
+
+    # Critical: normalise Part 1 BEFORE appending sibling sections. Part 1 typically
+    # ends with the services <section> (or its wrapping <div>s) still open — and per
+    # HTML5 spec <section> does NOT auto-close another <section>. If we skip this
+    # step, testimonials / CTA banner / footer end up nested inside that open services
+    # container and the lower half of the page renders as stretched/collapsed cells.
+    part1_normalised = _normalize_part1_for_stitching(part1_prefill)
 
     # Build testimonials in Python (always renders fully — no token-limit truncation).
     # Inject between Part 1 (services) and Part 2 (CTA banner) so flow is:
     # claim bar → nav → hero → social proof → services → testimonials → CTA → footer.
     testimonials_html = _build_testimonials(intel)
-    part1_with_testimonials = part1_prefill + "\n" + testimonials_html if testimonials_html else part1_prefill
-
-    # Anthropic requires the prefilled assistant content to NOT end with whitespace.
-    prefill_for_api = part1_with_testimonials.rstrip()
+    part1_with_testimonials = part1_normalised + "\n" + testimonials_html if testimonials_html else part1_normalised
 
     # ── Pass 2: CTA banner only (testimonials + footer are Python-built) ──
+    # claude-opus-4-7 does NOT support assistant message prefill (the older 4-5
+    # technique). Instead we pass Part 1's HTML as context inside the user
+    # message and ask Claude to output only the CTA banner section.
     print(f"  [generator] Pass 2/2 — CTA banner...")
     resp2 = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=3000,  # Reduced — only CTA banner now, no testimonials
+        model="claude-opus-4-7",
+        max_tokens=4000,  # CTA banner only — extra headroom prevents truncation mid-button
         messages=[
-            {"role": "user", "content": _build_part2_prompt(intel)},
-            {"role": "assistant", "content": prefill_for_api},
+            {"role": "user", "content": _build_part2_prompt(intel, design_spec, part1_with_testimonials.rstrip())},
         ]
     )
     part2 = _strip_fences(resp2.content[0].text)
@@ -713,6 +948,20 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     # subsequent footer + widget injection lands at the body level — not inside an
     # accidentally-still-open services card or testimonials grid.
     repaired = _repair_html_structure(stitched)
+
+    # Inject the design tokens <style> block into <head>. This is what makes the
+    # palette/fonts/radius/shadow consistent regardless of Claude drift.
+    if design_spec:
+        try:
+            tokens_block = design_system.render_css_tokens(design_spec)
+            if '</head>' in repaired:
+                repaired = repaired.replace('</head>', tokens_block + '\n</head>', 1)
+            elif '<head>' in repaired:
+                repaired = repaired.replace('<head>', '<head>\n' + tokens_block, 1)
+            else:
+                repaired = tokens_block + '\n' + repaired
+        except Exception as e:
+            print(f"  [generator] design tokens injection skipped: {e}")
 
     # Inject footer + chat widget right before </body> on the repaired tree
     footer_html = _build_footer(intel)
@@ -788,7 +1037,7 @@ OUTPUT FORMAT (JSON only, no markdown):
 
     client = _get_client()
     response = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-opus-4-7",
         max_tokens=1500,
         messages=[{"role": "user", "content": email_prompt}]
     )

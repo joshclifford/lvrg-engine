@@ -3,6 +3,8 @@ LVRG Engine — Supabase Client
 Saves leads and events to Supabase after each engine run.
 """
 
+from __future__ import annotations
+
 import os
 import json
 import urllib.request

@@ -268,27 +268,34 @@ class TestTwoCallBehavior:
         calls, _ = _run()
         assert calls[0][1]["max_tokens"] == 6000
 
-    def test_call2_max_tokens_is_6000(self):
+    def test_call2_max_tokens_is_4000(self):
+        # Pass 2 only renders the CTA banner now (testimonials + footer are Python-built).
+        # 4000 tokens gives Claude plenty of room to finish the section + button cleanly.
         calls, _ = _run()
-        assert calls[1][1]["max_tokens"] == 6000
+        assert calls[1][1]["max_tokens"] == 4000
 
-    def test_call2_has_assistant_prefill(self):
+    def test_call2_is_user_only_no_assistant_prefill(self):
+        # claude-opus-4-7 doesn't support assistant message prefill. Pass 2 now
+        # passes Part 1 as context inside a single user message.
         calls, _ = _run()
         msgs = calls[1][1]["messages"]
         roles = [m["role"] for m in msgs]
-        assert "assistant" in roles
+        assert "assistant" not in roles
+        assert roles == ["user"]
 
-    def test_call2_prefill_contains_part1_content(self):
+    def test_call2_user_message_contains_part1_context(self):
+        # The Part 1 HTML is embedded inside Pass 2's user message so Claude
+        # can match the existing design system. CLAIM BAR is a Part 1 section.
         calls, _ = _run()
         msgs = calls[1][1]["messages"]
-        assistant_content = next(m["content"] for m in msgs if m["role"] == "assistant")
-        assert "CLAIM BAR" in assistant_content
+        user_content = msgs[0]["content"]
+        assert "CLAIM BAR" in user_content
 
-    def test_continue_marker_stripped_from_prefill(self):
+    def test_continue_marker_stripped_from_pass2_context(self):
         calls, _ = _run()
         msgs = calls[1][1]["messages"]
-        assistant_content = next(m["content"] for m in msgs if m["role"] == "assistant")
-        assert "<!-- CONTINUE -->" not in assistant_content
+        user_content = msgs[0]["content"]
+        assert "<!-- CONTINUE -->" not in user_content
 
     def test_continue_marker_not_in_final_html(self):
         _, html = _run()
@@ -392,8 +399,8 @@ class TestRegression:
 
     def test_model_is_claude_opus(self):
         calls, _ = _run()
-        assert calls[0][1]["model"] == "claude-opus-4-5"
-        assert calls[1][1]["model"] == "claude-opus-4-5"
+        assert calls[0][1]["model"] == "claude-opus-4-7"
+        assert calls[1][1]["model"] == "claude-opus-4-7"
 
 
 # ─── Location handling ────────────────────────────────────────────────────────
