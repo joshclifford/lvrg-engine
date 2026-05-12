@@ -25,6 +25,13 @@ import time
 from datetime import datetime
 from slugify import slugify
 
+# Load .env before any engine module reads os.environ at import time
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Engine modules
 from intel import scrape_site, grade_site
 from generator import generate_site, generate_email
