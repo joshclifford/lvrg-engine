@@ -87,7 +87,8 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     rating = intel.get("rating")
     review_count = intel.get("review_count")
     if rating is not None:
-        rating_block = f"VERIFIED RATING: {rating}★ from {review_count} reviews. Use this as a real social-proof stat."
+        rating_stat = f"{rating}★ from {review_count} reviews" if review_count is not None else f"{rating}★"
+        rating_block = f"VERIFIED RATING: {rating_stat}. Use this as a real social-proof stat."
     else:
         rating_block = "RATING: none supplied. Do NOT invent a star rating or a review count."
 
