@@ -89,6 +89,11 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     # interpolated as the literal "None" and published as "from None reviews".
     rating = intel.get("rating")
     review_count = intel.get("review_count")
+    # Resolved in favour of staging's two-branch form over dd0f723's ternary
+    # (Hamza, same bug, same day). Both correctly omit a missing count; this one
+    # also tells the model NOT to state one. Omission alone leaves the model free
+    # to supply a plausible number, and inventing social proof is the failure
+    # this whole change set exists to stop.
     if rating is not None and review_count is not None:
         rating_block = (f"VERIFIED RATING: {rating}★ from {review_count} reviews. "
                         f"Use this as a real social-proof stat.")
