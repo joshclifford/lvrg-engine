@@ -7,9 +7,11 @@ Falls back gracefully if site is unreachable.
 import requests
 import json
 import os
+import re
 import anthropic
+from html import unescape as _unescape
+from urllib.parse import urljoin
 from config import INTEL_DIR
-import os
 
 def _get_client():
     key = os.environ.get("ANTHROPIC_API_KEY") or ""
@@ -20,25 +22,193 @@ HEADERS = {
 }
 
 
-def fetch_site_content(domain: str) -> str:
-    """Fetch raw HTML/text from a site."""
+FIRECRAWL_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
+FIRECRAWL_SCRAPE = "https://api.firecrawl.dev/v2/scrape"
+FIRECRAWL_SEARCH = "https://api.firecrawl.dev/v2/search"
+
+# Filenames/paths that are almost never a photo of the business.
+_JUNK_IMAGE = re.compile(
+    r"(logo|icon|favicon|sprite|badge|avatar|placeholder|pixel|tracking|"
+    r"spinner|loader|arrow|chevron|bullet|divider|pattern|1x1|blank)",
+    re.I,
+)
+_PHOTO_EXT = re.compile(r"\.(jpe?g|png|webp)(\?|$)", re.I)
+
+# Campaign artwork. Real on the page, wrong on a rebuilt site — a June giveaway
+# banner as the hero in August reads as stale.
+_PROMO_IMAGE = re.compile(
+    r"(giveaway|promo|coupon|discount|webinar|ebook|tipsheet|whitepaper|"
+    r"popup|pop-up|banner|cta-|-cta|newsletter|signup)",
+    re.I,
+)
+
+# WordPress writes crops as name-1024x839.png next to the full-size name.png.
+_WP_THUMB = re.compile(r"-(\d{2,4})x(\d{2,4})(\.(?:jpe?g|png|webp))$", re.I)
+
+
+def _photo_score(url: str) -> int:
+    """Rank candidates so the hero is a photo, not a promo banner.
+
+    Ordering used to be document order, which put AccuLynx's "GIVEAWAY" graphic
+    ahead of their product screenshot.
+    """
+    bare = url.split("?")[0]
+    score = 0
+
+    # Photographs are overwhelmingly JPEG/WebP. Transparent PNGs are logos,
+    # cut-outs and composites — they render badly behind object-fit: cover.
+    if re.search(r"\.(jpe?g|webp)$", bare, re.I):
+        score += 3
+
+    if _PROMO_IMAGE.search(bare):
+        score -= 5
+
+    m = _WP_THUMB.search(bare)
+    if m:
+        width = int(m.group(1))
+        score += 3 if width >= 800 else 1 if width >= 400 else -2
+    else:
+        score += 2  # no crop suffix — likely already the original
+
+    return score
+
+
+# A crop at least this wide is already fine for a hero — upgrading it just
+# makes the page heavier. Only genuinely small crops are worth replacing.
+_UPGRADE_BELOW_WIDTH = 800
+# Refuse originals big enough to hurt page load. AccuLynx's full-size homepage
+# graphics are ~1.5 MB each; four of those is a 6 MB page.
+_MAX_UPGRADE_BYTES = 900_000
+
+
+def _full_size(url: str) -> str:
+    """Trade a small WordPress crop for the original, when that's an improvement.
+
+    Two guards, both learned from real pages: a guessed original may not exist
+    (publishing a broken image is worse than a soft one), and the original may
+    be far too heavy to put on a page.
+    """
+    bare, _, query = url.partition("?")
+    m = _WP_THUMB.search(bare)
+    if not m or int(m.group(1)) >= _UPGRADE_BELOW_WIDTH:
+        return url
+
+    candidate = _WP_THUMB.sub(r"\3", bare)
+    try:
+        resp = requests.head(candidate, headers=HEADERS, timeout=4, allow_redirects=True)
+        if resp.status_code != 200:
+            return url
+        if not resp.headers.get("Content-Type", "").startswith("image/"):
+            return url
+        length = resp.headers.get("Content-Length")
+        if length and length.isdigit() and int(length) > _MAX_UPGRADE_BYTES:
+            return url
+        return candidate + (("?" + query) if query else "")
+    except Exception:
+        return url
+
+
+def fetch_site_content(domain: str) -> dict:
+    """Scrape the prospect's site. Returns {"text": str, "html": str}.
+
+    Firecrawl first — it renders JS and returns clean markdown, and it is not
+    truncated (V1 cut at 4,000 chars, so only half a homepage reached the model).
+    Falls back to a direct fetch so a Firecrawl outage degrades instead of
+    failing the build outright.
+    """
     url = f"https://{domain}" if not domain.startswith("http") else domain
+
+    if FIRECRAWL_KEY:
+        try:
+            resp = requests.post(
+                FIRECRAWL_SCRAPE,
+                headers={"Authorization": f"Bearer {FIRECRAWL_KEY}",
+                         "Content-Type": "application/json"},
+                json={"url": url, "formats": ["markdown", "html"], "onlyMainContent": False},
+                # Sized to the caller's 135s budget, not to Firecrawl's patience.
+                timeout=25,
+            )
+            if resp.status_code == 200:
+                data = resp.json().get("data", {}) or {}
+                text = (data.get("markdown") or "").strip()
+                html = data.get("html") or ""
+                if text:
+                    print(f"  [intel] Firecrawl scrape OK — {len(text)} chars")
+                    return {"text": text, "html": html}
+                print("  [intel] Firecrawl returned no markdown — falling back")
+            else:
+                print(f"  [intel] Firecrawl scrape failed: {resp.status_code} — falling back")
+        except Exception as e:
+            print(f"  [intel] Firecrawl scrape error: {e} — falling back")
+    else:
+        print("  [intel] FIRECRAWL_API_KEY not set — using direct fetch")
+
+    # Fallback: direct fetch, tags stripped. No 4,000-char cap here either.
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
-        # Strip HTML tags roughly for Claude
-        import re
-        text = resp.text
-        # Remove scripts and styles
-        text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL)
+        html = resp.text
+        text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
         text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
-        # Remove HTML tags
         text = re.sub(r'<[^>]+>', ' ', text)
-        # Collapse whitespace
         text = re.sub(r'\s+', ' ', text).strip()
-        return text[:4000]
+        print(f"  [intel] Direct fetch OK — {len(text)} chars")
+        return {"text": text, "html": html}
     except Exception as e:
         print(f"  [intel] Fetch failed: {e}")
-        return ""
+        return {"text": "", "html": ""}
+
+
+def extract_photos(html: str, base_url: str, limit: int = 6) -> list:
+    """Pull real photos of the business off their own page.
+
+    Prefers the og:image (almost always the hero shot), then <img> sources,
+    skipping the logos, icons and tracking pixels that make up most <img> tags
+    on a small business site.
+    """
+    if not html:
+        return []
+
+    candidates = []
+
+    og = re.search(
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)',
+        html, re.I,
+    )
+    if og:
+        candidates.append(og.group(1))
+
+    # src, and the first URL of any srcset (largest is usually last, but the
+    # first is always well-formed — good enough for a hero candidate).
+    candidates += re.findall(r'<img[^>]+src=["\']([^"\']+)', html, re.I)
+    candidates += [s.split()[0] for s in
+                   re.findall(r'<img[^>]+srcset=["\']([^"\',]+)', html, re.I) if s.strip()]
+
+    seen, kept = set(), []
+    for position, raw in enumerate(candidates):
+        # Unescape first: HTML-encoded query strings (?v=1&amp;width=700) are
+        # common on Shopify/WordPress and produce a dead URL if left as-is.
+        src = _unescape(raw.strip())
+        if not src or src.startswith("data:"):
+            continue
+        absolute = urljoin(base_url, src)
+        if not absolute.startswith(("http://", "https://")):
+            continue
+        if not _PHOTO_EXT.search(absolute):
+            continue          # skips .svg, .gif and extensionless endpoints
+        if _JUNK_IMAGE.search(absolute):
+            continue
+        key = absolute.split("?")[0]
+        if key in seen:
+            continue
+        seen.add(key)
+        kept.append((absolute, position))
+
+    # Rank before truncating. Document order alone puts whatever the site
+    # happens to render first — often a promo banner — into the hero slot.
+    # Position stays as the tie-breaker so equal-quality images keep page order.
+    kept.sort(key=lambda pair: (-_photo_score(pair[0]), pair[1]))
+
+    return [_full_size(url) for url, _ in kept[:limit]]
 
 
 def extract_intel_with_claude(domain: str, raw_text: str) -> dict:
@@ -103,7 +273,8 @@ def scrape_site(domain: str) -> dict:
     url = f"https://{domain}"
     print(f"  [intel] Fetching {url}...")
     
-    raw_text = fetch_site_content(domain)
+    scraped = fetch_site_content(domain)
+    raw_text, raw_html = scraped["text"], scraped["html"]
 
     # Never build from an unread site. Without this the model invents the whole
     # business from the domain string and we publish a fiction under a real
@@ -116,6 +287,11 @@ def scrape_site(domain: str) -> dict:
 
     print(f"  [intel] Extracting structured intel with Claude...")
     extracted = extract_intel_with_claude(domain, raw_text)
+
+    # Real photos off the prospect's own page. Without these the generator has
+    # nothing to show and falls back to gradients — the "AI slop" look.
+    photos = extract_photos(raw_html, url)
+    print(f"  [intel] Photos: {len(photos)} found on their site")
 
     # Build final intel object with fallbacks
     intel = {
@@ -141,7 +317,16 @@ def scrape_site(domain: str) -> dict:
         "cta_angle": extracted.get("cta_angle", "Get in Touch"),
         "owner_name": extracted.get("owner_name", ""),
         "neighborhood": extracted.get("neighborhood", ""),
-        "raw_text": raw_text[:1000],
+        # Sample of the page passed to the generator prompt. The full text
+        # goes to the intel extraction above; this is the slice the site
+        # writer sees for voice and detail. Was 1000 when the scrape itself
+        # was capped at 4000 — there is room for more now.
+        "raw_text": raw_text[:6000],
+        # Photos from their own site; rating/reviews are passed in by the app
+        # (Google Maps via Apify) and merged over this in api.py.
+        "photos": photos,
+        "rating": None,
+        "review_count": None,
     }
     
     print(f"  [intel] ✓ {intel['business_name']} — {intel['business_type']} — {intel['location']}")

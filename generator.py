@@ -10,6 +10,14 @@ from config import (SENDER_NAME, SENDER_EMAIL,
                     SENDER_AGENCY, SENDER_WEBSITE, SENDER_PHONE,
                     BOOKING_URL, PREVIEW_BASE_URL, SITES_DIR, EMAILS_DIR)
 
+# Ceiling for a generated page. This is a cap, not a target — most pages come in
+# well under it, so raising it costs nothing on a typical build and only helps
+# the pages that were previously cut off. Deliberately not 128K: the caller
+# aborts the whole engine call at 135s (build-smart-site ENGINE_TIMEOUT_MS) and
+# generation already runs ~82s, so an unbounded ceiling would trade truncated
+# pages for timed-out builds.
+SITE_MAX_TOKENS = int(os.environ.get("SITE_MAX_TOKENS", "32000"))
+
 def _build_chat_widget(intel: dict) -> str:
     """Build the chat widget HTML — injected programmatically after Claude generates the site."""
     color = intel.get('primary_color', '#333')
@@ -60,7 +68,33 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     print(f"  [generator] Generating site for {intel['business_name']}...")
     
     notes_block = f"\n\nSPECIAL INSTRUCTIONS FROM CLIENT:\n{notes}\n" if notes else ""
-    
+
+    # Real photos scraped off the prospect's own site. When there are none the
+    # page falls back to gradients — which is exactly what every page looked
+    # like before, because nothing ever populated this.
+    photos = intel.get("photos", [])
+    if photos:
+        photo_block = "REAL PHOTOS (from the business's own website — use these as <img> tags, linking straight to the URLs):\n" \
+            + "\n".join(f"  {i + 1}. {url}" for i, url in enumerate(photos[:4])) \
+            + "\nUse the strongest one as the hero (an <img> with object-fit:cover, or a CSS background-image url())." \
+            + "\nUse the others in gallery or service sections where they fit. Don't force a photo in where it doesn't belong."
+    else:
+        photo_block = "PHOTOS: none available. Use CSS gradients and brand colours only — no placeholder images, no stock photo URLs."
+
+    # Rating comes from the app (Google Maps via Apify), merged in by api.py.
+    # Never invented here: a fabricated star rating on a real business's page
+    # is a legal problem, not a design choice.
+    rating = intel.get("rating")
+    review_count = intel.get("review_count")
+    if rating is not None:
+        rating_block = f"VERIFIED RATING: {rating}★ from {review_count} reviews. Use this as a real social-proof stat."
+    else:
+        rating_block = "RATING: none supplied. Do NOT invent a star rating or a review count."
+
+    socials = intel.get("socials") or {}
+    social_links = "\n".join(f"  {k.replace('_url', '').title()}: {v}" for k, v in socials.items())
+    social_block = f"SOCIAL PROFILES (link these in the footer):\n{social_links}" if social_links else ""
+
     site_prompt = f"""You are an expert web designer building a high-end preview website for {intel['business_name']}.{notes_block}
 
 PROSPECT INTEL:
@@ -76,14 +110,21 @@ PROSPECT INTEL:
 - Primary color: {intel.get('primary_color', '#333')}
 - Business type: {intel.get('business_type', 'other')}
 - What's missing on their site: {intel.get('missing', 'chat, CTA, contact info')}
-- Raw site content: {intel.get('raw_text', '')[:2000]}
+- Raw site content: {intel.get('raw_text', '')}
+
+{photo_block}
+
+{rating_block}
+
+{social_block}
 
 BUILD a complete single-file HTML homepage (index.html).
 
-⚠️ CRITICAL OUTPUT RULE — READ FIRST:
-DO NOT write a large <style> block. Write a SHORT <style> (CSS reset + :root vars only, max 30 lines),
-then immediately write <body> with ALL styling as inline style= attributes on each element.
-This is mandatory — long <style> blocks get cut off before the HTML body is ever written.
+STYLING:
+Write a proper <style> block in the <head>. Use it — you have room.
+It MUST include responsive breakpoints: the page has to work on a phone, not
+just a desktop. Use @media queries for layout, type scale, and spacing, and add
+:hover states on links and buttons.
 
 REQUIRED FILE STRUCTURE:
 <!DOCTYPE html>
@@ -96,11 +137,12 @@ REQUIRED FILE STRUCTURE:
   <style>
     * {{ margin:0; padding:0; box-sizing:border-box; }}
     body {{ font-family: '...', sans-serif; }}
-    /* NOTHING ELSE IN STYLE — use inline styles on every element */
+    /* Full stylesheet here: layout, type scale, components, :hover states. */
+    /* And @media breakpoints — the page must work on a phone. */
   </style>
 </head>
 <body>
-  <!-- ALL CONTENT HERE WITH INLINE style= ATTRIBUTES -->
+  <!-- Content, styled by the classes defined above -->
 </body>
 </html>
 
@@ -109,20 +151,25 @@ DESIGN:
 - Brand vibe: {intel.get('brand_vibe', 'clean, modern')} — let this guide fonts, spacing, mood
 - Must look like a $5,000 professionally designed website
 - Use Google Fonts that match the brand vibe
-- NO external image URLs — use CSS gradients and background colors for visual sections
+- Images: use ONLY the REAL PHOTOS listed above, if any were given. Never invent an
+  image URL, never use a stock-photo or placeholder service. With no photos, build
+  the visual sections from CSS gradients and brand colours.
 
-SECTIONS (all using inline style= attributes):
+SECTIONS:
 1. CLAIM BAR: sticky top bar, black background. Centered single line: "This site was built for **{intel['business_name']}** by LVRG Agency" (business name in bold white, rest in normal gray/white text), then immediately a gold "Claim This Site →" pill button linking to {BOOKING_URL}. All on one centered line. No left/right split.
 2. NAV: business name as logo, 3 nav links, primary CTA button
-3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs, CSS gradient background using brand colors
-4. SOCIAL PROOF BAR: use their REAL stats — {intel.get('social_proof', '3 key stats')}
+3. HERO: bold 5-8 word headline (use their tagline/vibe: "{intel.get('tagline','')}"), subheadline with value prop, 2 CTAs. Background: the best real photo if you were given one, otherwise a CSS gradient in their brand colours
+4. SOCIAL PROOF BAR: only stats you were actually given — the verified rating above and {intel.get('social_proof', 'their listed claims')}. If you were given none, omit this section rather than filling it with invented numbers
 5. SERVICES: 3 cards based on their REAL services: {', '.join((intel.get('services') or [])[:3])}
-6. TESTIMONIALS: 2-3 compelling pull quotes — write them fresh but grounded in their real social proof and business type
+6. TESTIMONIALS: OMIT this section. You have not been given a single real customer quote, and this page carries the business's own name and branding — an invented quote puts words in a real customer's mouth on a page the owner will be asked to claim. Never write a testimonial, a customer name, or a quote.
 7. CTA BANNER: compelling headline + description driving toward: {intel.get('key_cta', 'booking')}
 8. FOOTER: {intel.get('location','')}, {intel.get('phone','')}, hours, © LVRG Agency
 
 COPY RULES:
 - Use their REAL business details, real services, real social proof
+- NEVER write a fake testimonial, customer name, or quote. No real review text is
+  ever supplied to you, so there is no case where a quote is legitimate — skip
+  quotes entirely rather than inventing one that sounds plausible
 - Reference {intel.get('location','').split(',')[0] if intel.get('location') else 'their city'} naturally in copy
 - Every CTA drives toward: {intel.get('cta_angle', 'booking a visit')}
 - Pain point to address: {intel.get('pain_point', '')}
@@ -130,12 +177,20 @@ COPY RULES:
 OUTPUT: Return ONLY the complete HTML. No explanation. No markdown code fences. No chat widget — it will be injected. Start with <!DOCTYPE html>"""
 
     client = _get_client()
-    response = client.messages.create(
+    # Streamed, not create(). A full page runs well past the SDK's non-streaming
+    # HTTP timeout at this token ceiling; streaming also lets max_tokens rise
+    # without the request dying mid-generation. get_final_message() gives the
+    # same object create() would have returned.
+    with client.messages.stream(
         model="claude-opus-4-5",
-        max_tokens=12000,
-        messages=[{"role": "user", "content": site_prompt}]
-    )
-    
+        max_tokens=SITE_MAX_TOKENS,
+        messages=[{"role": "user", "content": site_prompt}],
+    ) as stream:
+        response = stream.get_final_message()
+
+    if response.stop_reason == "max_tokens":
+        print(f"  [generator] WARNING: hit max_tokens ({SITE_MAX_TOKENS}) — page may be cut short")
+
     html = response.content[0].text.strip()
     
     # Strip markdown code blocks if Claude wrapped it
