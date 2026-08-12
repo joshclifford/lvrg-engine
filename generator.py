@@ -84,11 +84,22 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     # Rating comes from the app (Google Maps via Apify), merged in by api.py.
     # Never invented here: a fabricated star rating on a real business's page
     # is a legal problem, not a design choice.
+    # A rating and a review count arrive independently — Apify returns plenty of
+    # listings with one and not the other. Branch on both, or a missing count is
+    # interpolated as the literal "None" and published as "from None reviews".
     rating = intel.get("rating")
     review_count = intel.get("review_count")
-    if rating is not None:
-        rating_stat = f"{rating}★ from {review_count} reviews" if review_count is not None else f"{rating}★"
-        rating_block = f"VERIFIED RATING: {rating_stat}. Use this as a real social-proof stat."
+    # Resolved in favour of staging's two-branch form over dd0f723's ternary
+    # (Hamza, same bug, same day). Both correctly omit a missing count; this one
+    # also tells the model NOT to state one. Omission alone leaves the model free
+    # to supply a plausible number, and inventing social proof is the failure
+    # this whole change set exists to stop.
+    if rating is not None and review_count is not None:
+        rating_block = (f"VERIFIED RATING: {rating}★ from {review_count} reviews. "
+                        f"Use this as a real social-proof stat.")
+    elif rating is not None:
+        rating_block = (f"VERIFIED RATING: {rating}★. Use this as a real social-proof "
+                        f"stat. You were NOT given a review count — do not state one.")
     else:
         rating_block = "RATING: none supplied. Do NOT invent a star rating or a review count."
 
