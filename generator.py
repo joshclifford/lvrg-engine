@@ -18,6 +18,33 @@ from config import (SENDER_NAME, SENDER_EMAIL,
 # pages for timed-out builds.
 SITE_MAX_TOKENS = int(os.environ.get("SITE_MAX_TOKENS", "32000"))
 
+
+def _as_count(value) -> int | None:
+    """A review count as an int, or None if it is not usable as one.
+
+    intel["review_count"] is not guaranteed to be a number. It can come from
+    leadscraper (a real int) or from extract_intel_with_claude, whose output is
+    model-generated JSON — so "12", "1,204" and "no reviews" all turn up. A bare
+    `value > 0` raises TypeError on a str in Python 3, which would turn a
+    cosmetic prompt bug into a failed build.
+
+    Anything that will not coerce becomes None, which routes to the no-count
+    branch that tells the model not to state a review count at all. Refusing to
+    guess is the whole point of this block.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        # Numbers first: json.loads gives 12.0 for `12.0`, and routing that
+        # through str() produces "12.0", which int() refuses. OverflowError
+        # covers inf/nan, which int() also refuses but differently.
+        if isinstance(value, (int, float)):
+            return int(value)
+        return int(str(value).replace(",", "").strip())
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
 def _build_chat_widget(intel: dict) -> str:
     """Build the chat widget HTML — injected programmatically after Claude generates the site."""
     color = intel.get('primary_color', '#333')
@@ -88,13 +115,18 @@ def generate_site(intel: dict, prospect_id: str, notes: str = "") -> str:
     # listings with one and not the other. Branch on both, or a missing count is
     # interpolated as the literal "None" and published as "from None reviews".
     rating = intel.get("rating")
-    review_count = intel.get("review_count")
+    review_count = _as_count(intel.get("review_count"))
     # Resolved in favour of staging's two-branch form over dd0f723's ternary
     # (Hamza, same bug, same day). Both correctly omit a missing count; this one
     # also tells the model NOT to state one. Omission alone leaves the model free
     # to supply a plausible number, and inventing social proof is the failure
     # this whole change set exists to stop.
-    if rating is not None and review_count is not None:
+    # `> 0`, not just `is not None`: a count of exactly zero passed the None
+    # check and published "4.5★ from 0 reviews. Use this as a real social-proof
+    # stat." — which is not social proof, it is an own goal on the prospect's
+    # own branding. Zero is the absence of reviews, so it takes the no-count
+    # branch below, which tells the model not to state one.
+    if rating is not None and review_count is not None and review_count > 0:
         rating_block = (f"VERIFIED RATING: {rating}★ from {review_count} reviews. "
                         f"Use this as a real social-proof stat.")
     elif rating is not None:
