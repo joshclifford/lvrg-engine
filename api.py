@@ -74,12 +74,69 @@ app.add_middleware(
 )
 
 
+def _post_build_callback(
+    callback_url: str,
+    callback_secret: str,
+    lead_id: str,
+    status: str,
+    preview_url: str = None,
+    error: str = None,
+) -> None:
+    """Tell the caller how the build actually ended.
+
+    WHY (13 Aug 2026): leadscraper's build-smart-site waits on /build with a
+    timeout and used to treat that timeout as failure. Real builds run 106-150s
+    against its 160s wait, so builds that had ALREADY SUCCEEDED were written off
+    — one site was deployed 365ms before the caller gave up, and the lead was
+    marked failed and refunded while the page sat live on GitHub Pages.
+
+    It cannot simply read our result: this engine writes to a DIFFERENT Supabase
+    project (lm-tool's `leads`/`engine_queue`) and has no access to leadscraper's
+    `businesses` table. So we report over HTTP instead, which also means no
+    leadscraper service-role key ever has to live on Railway.
+
+    NEVER RAISES. This engine is shared with lm-tool, whose builds must not fail
+    because a leadscraper endpoint is down or misconfigured. Best-effort only.
+    """
+    if not callback_url or not callback_secret or not lead_id:
+        return  # caller didn't ask for a callback (lm-tool, smoke tests, CLI)
+    try:
+        import urllib.request
+        payload = {"lead_id": lead_id, "status": status}
+        if preview_url:
+            payload["preview_url"] = preview_url
+        if error:
+            payload["error"] = str(error)[:500]
+        req = urllib.request.Request(
+            callback_url,
+            data=json.dumps(payload).encode(),
+            headers={
+                "Content-Type": "application/json",
+                "x-callback-secret": callback_secret,
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15) as res:
+            res.read()
+        print(f"  [callback] ✓ reported {status} for lead {lead_id}")
+    except Exception as e:
+        # Logged, never raised. If this fails the lead stays `building` on the
+        # caller's side and their reaper refunds it — degraded, not broken.
+        print(f"  [callback] failed to report {status} for lead {lead_id}: {e}")
+
+
 class BuildRequest(BaseModel):
     domain: str
     no_deploy: bool = False
     offer: str = "Smart Site"
     cta: str = "Book a Call"
     notes: str = ""
+    # Completion callback (leadscraper). All three must be present or the
+    # callback is skipped entirely — every other caller omits them and is
+    # unaffected.
+    lead_id: str = ""
+    callback_url: str = ""
+    callback_secret: str = ""
     # Known facts the caller already holds. leadscraper enriches every lead via
     # Apify + Hunter, so it has the phone, email, address, socials and a real
     # Google rating before the engine starts. Re-deriving them from a scrape is
@@ -143,7 +200,7 @@ def _merge_known(intel: dict, known: dict) -> list:
     return used
 
 
-async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes: str = "", known: dict = None) -> AsyncGenerator[str, None]:
+async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes: str = "", known: dict = None, lead_id: str = "", callback_url: str = "", callback_secret: str = "") -> AsyncGenerator[str, None]:
     """Run the full engine pipeline, yielding SSE events."""
 
     loop = asyncio.get_event_loop()
@@ -157,6 +214,32 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
     def log(text: str, level: str = "info"):
         line = sse("log", text=text, level=level)
         logs.append(line)
+
+    # ── Callback state ───────────────────────────────────────────────────────
+    # Outside the try so `finally` can still read them after the generator is
+    # torn down mid-flight.
+    preview_url = None
+    pipeline_error = None
+    callback_sent = False
+
+    def _send_callback_once():
+        """Report the build outcome to the caller. Safe to call repeatedly.
+
+        MUST be synchronous — invoked from `finally`, which on a client
+        disconnect runs while GeneratorExit is propagating. Awaiting there
+        raises "async generator ignored GeneratorExit".
+        """
+        nonlocal callback_sent
+        if callback_sent or no_deploy:
+            return
+        callback_sent = True
+        if preview_url:
+            _post_build_callback(callback_url, callback_secret, lead_id, "ready", preview_url=preview_url)
+        else:
+            _post_build_callback(
+                callback_url, callback_secret, lead_id, "failed",
+                error=pipeline_error or "Site generated but deploy failed.",
+            )
 
     try:
         # ── Step 0: Fetch queue contact data (Scout may have found email/phone) ──
@@ -266,6 +349,8 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
                 yield sse("log", text=f"Queue write-back skipped: {e}", level="dim")
 
         # ── Done ─────────────────────────────────────────────────────
+        # The outcome callback fires from `finally` below, not here — see the
+        # comment there.
         yield sse("result", payload={
             "preview_url": preview_url,
             "email": email_data,
@@ -275,9 +360,26 @@ async def run_pipeline(domain: str, no_deploy: bool, offer: str, cta: str, notes
         yield sse("done", status="complete")
 
     except Exception as e:
+        pipeline_error = str(e)
         yield sse("log", text=f"Pipeline error: {e}", level="error")
         yield sse("error", text=str(e))
         yield sse("done", status="error")
+
+    finally:
+        # ── Report the outcome to the caller — ALWAYS ────────────────────────
+        #
+        # run_pipeline is an async generator driven by StreamingResponse. When
+        # the caller's connection drops, Starlette stops iterating and execution
+        # never returns to the body — the next `yield` raises GeneratorExit and
+        # everything after it is skipped. That is precisely the case the callback
+        # exists for: leadscraper aborts at 160s and this pipeline routinely runs
+        # longer. `finally` still runs while GeneratorExit propagates, so the
+        # report survives. Must stay synchronous — awaiting here raises
+        # "async generator ignored GeneratorExit".
+        try:
+            _send_callback_once()
+        except Exception as _cb_err:
+            print(f"  [callback] unexpected error while reporting outcome: {_cb_err}")
 
 
 @app.post("/build")
@@ -290,7 +392,8 @@ async def build(req: BuildRequest):
         raise HTTPException(status_code=400, detail="domain is required")
 
     return StreamingResponse(
-        run_pipeline(domain, req.no_deploy, req.offer, req.cta, req.notes, req.known),
+        run_pipeline(domain, req.no_deploy, req.offer, req.cta, req.notes, req.known,
+                     req.lead_id, req.callback_url, req.callback_secret),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
